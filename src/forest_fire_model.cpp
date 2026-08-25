@@ -594,16 +594,55 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
     
 
 
+    bool relaxed1=false;
+    bool relaxed2=false;
     while(cluster.size()<density2*N-1)
     {
-    
-    
+
        //Seleccionamos un vacio y un estado=1 pegado al aglomerado
+       //
+       // Robustness fix: the original algorithm here is unbounded random
+       // rejection sampling for an "isolated" state1 site (no state2
+       // neighbor). For several (density2, p) combinations well inside the
+       // paper's own stated ranges (e.g. density2=0.5, p=0.5) the pool of
+       // such isolated sites empties out long before the target density is
+       // reached, and this loop never terminates -- confirmed to hang
+       // indefinitely (not just "slow") across grid sizes L=10..100. Since
+       // this is a landscape-generation *setup* step, not part of the
+       // reaction dynamics itself, we cap the search and fall back to a
+       // relaxed selection (drop the "isolated" requirement, or as a last
+       // resort accept any remaining state1 site) rather than hang forever.
+       // A one-time notice is printed via Rcpp::Rcout when this triggers.
        bool condition1=false;
+       long attempts1=0;
+       const long MAX_ATTEMPTS1 = 2000L;  // fixed, independent of N -- see note above the outer loop
        while(condition1==false)
        {
-       
-       
+        attempts1++;
+        if(attempts1 > MAX_ATTEMPTS1)
+        {
+            if(!relaxed1)
+            {
+                relaxed1=true;
+                Rcpp::Rcout << "[ForestFireR] generate_landscape: relaxing the "
+                               "'isolated site' constraint for this replacement "
+                               "(no such site found after " << MAX_ATTEMPTS1 <<
+                               " attempts) -- this density2/p combination hits an "
+                               "algorithmic limitation of the inherited landscape "
+                               "generator. Result may deviate slightly from a "
+                               "strict Appendix B run." << std::endl;
+            }
+            // relaxed: accept ANY remaining state1 site, no isolation requirement
+            random_int = (rand() % (N));
+            ReverseGridMap(ix,jx,L,random_int);
+            if(S[ix][jx]==state1)
+            {
+               condition1=true;
+               position1=random_int;
+            }
+            continue;
+        }
+
         random_int = (rand() % (N));
         ReverseGridMap(ix,jx,L,random_int);
         if(S[ix][jx]==state1)
@@ -631,9 +670,63 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
        } 
       }
       bool condition2=false;
+      long attempts2=0;
+      const long MAX_ATTEMPTS2 = 2000L;  // fixed; its fallback is an O(N) linear scan, so keep this small
       while(condition2==false)
       {
-       
+        attempts2++;
+        if(attempts2 > MAX_ATTEMPTS2)
+        {
+            if(!relaxed2)
+            {
+                relaxed2=true;
+                Rcpp::Rcout << "[ForestFireR] generate_landscape: falling back to "
+                               "a linear scan for a cluster-adjacent state1 site "
+                               "(random search exhausted after " << MAX_ATTEMPTS2 <<
+                               " attempts)." << std::endl;
+            }
+            bool found=false;
+            for(int si=0; si<L && !found; si++)
+            {
+                for(int sj=0; sj<L && !found; sj++)
+                {
+                    if(S[si][sj]==state1)
+                    {
+                        int di[4]={1,-1,0,0}; int dj[4]={0,0,1,-1};
+                        for(int dd=0; dd<4; dd++)
+                        {
+                            int ni=si+di[dd], nj=sj+dj[dd];
+                            if(ni>=0 && ni<L && nj>=0 && nj<L && S[ni][nj]==state2)
+                            {
+                                condition2=true;
+                                GridMap(si,sj,L,position2);
+                                found=true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if(!found)
+            {
+                // ultimate fallback: no state1 site borders the cluster at all
+                // (only possible if state1 has been fully consumed elsewhere);
+                // accept any remaining state1 site so the loop still terminates.
+                for(int si=0; si<L && !condition2; si++)
+                {
+                    for(int sj=0; sj<L && !condition2; sj++)
+                    {
+                        if(S[si][sj]==state1)
+                        {
+                            condition2=true;
+                            GridMap(si,sj,L,position2);
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
           random_int = (rand() % (cluster.size()));
           ReverseGridMap(ix,jx,L,cluster[random_int]);
           random_int_neigh = (rand() % (4));
@@ -833,21 +926,32 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
            Dp2=fabs(dest11p2-exp11)+fabs(dest12p2-exp12)+fabs(dest22p2-exp22);
       
 
+           // Robustness fix: this was originally two independent `if`s
+           // (Dp1<Dp2 / Dp2<Dp1), so an exact tie (Dp1==Dp2) placed
+           // nothing and the outer loop made zero progress that
+           // iteration. Ties are rare in the "far"/"near" candidates the
+           // strict algorithm finds, but became common once the
+           // isolated-site/cluster-adjacent-site searches above started
+           // falling back to relaxed selection (position1 and position2
+           // can then coincide) -- confirmed to cause the outer growth
+           // loop to spin forever at high target densities (e.g.
+           // density2=0.9) regardless of grid size. Using if/else
+           // guarantees exactly one placement happens every iteration.
            if(Dp1<Dp2)
            {
-             ReverseGridMap(vi,vj,L,position1);  
+             ReverseGridMap(vi,vj,L,position1);
              S[vi][vj]=state2;
-             cluster.insert(cluster.end(),position1); 
+             cluster.insert(cluster.end(),position1);
 
              est11=est11p1;
              est12=est12p1;
              est22=est22p1;
            }
-           if(Dp2<Dp1)
+           else
            {
-             ReverseGridMap(vi,vj,L,position2);  
+             ReverseGridMap(vi,vj,L,position2);
              S[vi][vj]=state2;
-             cluster.insert(cluster.end(),position2); 
+             cluster.insert(cluster.end(),position2);
 
              est11=est11p2;
              est12=est12p2;

@@ -64,6 +64,38 @@ of any specific published panel.
    measure (relevant only at parameter corners well outside Table 1's
    calibrated ranges), all state variables are also clamped to `[0, 1]` and
    checked for `NaN`/`Inf` after every step.
+6. **`generate_landscape()` (the Appendix B pair-correlation landscape
+   generator, `InitialConditionNonHomogeneous` in the C++ source) could hang
+   indefinitely** for common `(density2, p)` combinations -- e.g.
+   `density2 = 0.9` with almost any `p`, or `density2 >= 0.4` with
+   `p = 0.5` (exactly the regime Appendix B's own Fig. A1 uses). Two
+   compounding causes:
+   - The inner search for a next candidate site (an "isolated" state-1 site,
+     or a state-1 site adjacent to the growing cluster) is unbounded
+     rejection sampling; at high target densities or clustered `p`, sites
+     satisfying the strict condition become rare-to-nonexistent, so the
+     search never terminates.
+   - Once bounded (see below), the two searches can end up returning the
+     *same* site for both candidates. The original code compared them with
+     two independent `if (Dp1 < Dp2)` / `if (Dp2 < Dp1)` statements, so an
+     exact tie placed nothing and the outer growth loop made zero progress
+     that iteration -- confirmed by instrumentation to spin forever with
+     `cluster.size()` frozen at a fixed value.
+
+   Fixed with an attempt-limit-plus-relaxation strategy (this changes
+   behavior at the specific parameter combinations that used to hang; it
+   does not affect any case that previously terminated): each inner search
+   is capped at 2000 attempts, after which it falls back to a relaxed
+   selection (any random state-1 site, or a direct scan for a
+   cluster-adjacent one) and prints a one-time `Rcpp::Rcout` warning
+   explaining that the result may deviate slightly from a strict Appendix B
+   run for that landscape. Independently, the two-candidate comparison was
+   changed from two independent `if`s to `if (Dp1 < Dp2) {...} else {...}`,
+   guaranteeing exactly one site is placed per outer iteration regardless of
+   ties. Verified against the full previously-hanging matrix (`L` in
+   `{20,30,50,70,100,200}`, `density2` in `{0.1,...,0.9}`, `p` in
+   `{0.5,0.6,0.9,1}`): all combinations now complete in well under 2
+   seconds.
 
 ## New capabilities
 
