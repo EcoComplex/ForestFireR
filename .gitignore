@@ -1,0 +1,10 @@
+# R package build artifacts
+*.o
+*.so
+*.dll
+*.tar.gz
+.Rhistory
+.RData
+.Rproj.user/
+src/*.o
+src/*.so
