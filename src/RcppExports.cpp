@@ -35,8 +35,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simulate_spatial_cpp
-Rcpp::List simulate_spatial_cpp(double T, int Lgrid, double density2, double p, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, bool periodic, int seed, double record_dt, bool record_grid);
-RcppExport SEXP _ForestFireR_simulate_spatial_cpp(SEXP TSEXP, SEXP LgridSEXP, SEXP density2SEXP, SEXP pSEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP periodicSEXP, SEXP seedSEXP, SEXP record_dtSEXP, SEXP record_gridSEXP) {
+Rcpp::List simulate_spatial_cpp(double T, int Lgrid, double density2, double p, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, bool periodic, int seed, double record_dt, bool record_grid, bool capture_fire_snapshots, double fire_snapshot_min_gap);
+RcppExport SEXP _ForestFireR_simulate_spatial_cpp(SEXP TSEXP, SEXP LgridSEXP, SEXP density2SEXP, SEXP pSEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP periodicSEXP, SEXP seedSEXP, SEXP record_dtSEXP, SEXP record_gridSEXP, SEXP capture_fire_snapshotsSEXP, SEXP fire_snapshot_min_gapSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -65,7 +65,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< double >::type record_dt(record_dtSEXP);
     Rcpp::traits::input_parameter< bool >::type record_grid(record_gridSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_spatial_cpp(T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid));
+    Rcpp::traits::input_parameter< bool >::type capture_fire_snapshots(capture_fire_snapshotsSEXP);
+    Rcpp::traits::input_parameter< double >::type fire_snapshot_min_gap(fire_snapshot_min_gapSEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_spatial_cpp(T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, capture_fire_snapshots, fire_snapshot_min_gap));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -87,8 +89,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simulate_spatial_from_grid_cpp
-Rcpp::List simulate_spatial_from_grid_cpp(double T, Rcpp::IntegerMatrix initial_grid, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, bool periodic, int seed, double record_dt, bool record_grid, bool check_extinction);
-RcppExport SEXP _ForestFireR_simulate_spatial_from_grid_cpp(SEXP TSEXP, SEXP initial_gridSEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP periodicSEXP, SEXP seedSEXP, SEXP record_dtSEXP, SEXP record_gridSEXP, SEXP check_extinctionSEXP) {
+Rcpp::List simulate_spatial_from_grid_cpp(double T, Rcpp::IntegerMatrix initial_grid, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, bool periodic, int seed, double record_dt, bool record_grid, bool check_extinction, bool capture_fire_snapshots, double fire_snapshot_min_gap);
+RcppExport SEXP _ForestFireR_simulate_spatial_from_grid_cpp(SEXP TSEXP, SEXP initial_gridSEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP periodicSEXP, SEXP seedSEXP, SEXP record_dtSEXP, SEXP record_gridSEXP, SEXP check_extinctionSEXP, SEXP capture_fire_snapshotsSEXP, SEXP fire_snapshot_min_gapSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -116,7 +118,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type record_dt(record_dtSEXP);
     Rcpp::traits::input_parameter< bool >::type record_grid(record_gridSEXP);
     Rcpp::traits::input_parameter< bool >::type check_extinction(check_extinctionSEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_spatial_from_grid_cpp(T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction));
+    Rcpp::traits::input_parameter< bool >::type capture_fire_snapshots(capture_fire_snapshotsSEXP);
+    Rcpp::traits::input_parameter< double >::type fire_snapshot_min_gap(fire_snapshot_min_gapSEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_spatial_from_grid_cpp(T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction, capture_fire_snapshots, fire_snapshot_min_gap));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -190,9 +194,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ForestFireR_set_seed_cpp", (DL_FUNC) &_ForestFireR_set_seed_cpp, 1},
     {"_ForestFireR_generate_landscape_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_cpp, 4},
-    {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 25},
+    {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 27},
     {"_ForestFireR_generate_landscape_layers_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_layers_cpp, 7},
-    {"_ForestFireR_simulate_spatial_from_grid_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_from_grid_cpp, 24},
+    {"_ForestFireR_simulate_spatial_from_grid_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_from_grid_cpp, 26},
     {"_ForestFireR_simulate_mean_field_cpp", (DL_FUNC) &_ForestFireR_simulate_mean_field_cpp, 24},
     {"_ForestFireR_simulate_mean_field_stochastic_cpp", (DL_FUNC) &_ForestFireR_simulate_mean_field_stochastic_cpp, 22},
     {NULL, NULL, 0}

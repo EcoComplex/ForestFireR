@@ -143,6 +143,23 @@ of any specific published panel.
     reach an unreachable target, using the same attempt-limit-plus-relaxation
     approach as the `generate_landscape()` fix above -- and prints a
     one-time warning naming how many cells it actually managed to place.
+- `capture_fire_snapshots` (on `simulate_spatial()` and
+  `simulate_spatial_from_grid()`): Table 1's fire-spread and
+  fire-extinction rates are ~1e6/year (hours-scale) against years-scale
+  vegetation dynamics, so any single active-fire episode resolves in a
+  sliver of simulated time that a fixed-time grid capture (`record_grid`'s
+  start/end snapshots) essentially never lands on -- the reason Fig. 2's
+  reproduction previously never showed the active-fire (red) cells the
+  real figure does, even though the underlying dynamics were correct. With
+  `capture_fire_snapshots = TRUE`, the engine scans for `n3 > 0` after
+  every accepted Gillespie event and records that grid (throttled to at
+  most one capture per `fire_snapshot_min_gap` simulated-time units, so a
+  single outbreak doesn't fill the return value with near-duplicate
+  frames). The result gains `fire_snapshot_times` (numeric vector) and
+  `fire_snapshot_grids` (list of `L`x`L` integer matrices, same length and
+  order) -- pick whichever entry is closest to a target illustration time
+  after the run completes. Overhead is small (~1% wall-clock in our
+  testing) since `n3` is already recomputed after every event regardless.
 
 ## Validation
 

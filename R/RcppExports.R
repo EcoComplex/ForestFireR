@@ -9,16 +9,16 @@ generate_landscape_cpp <- function(Lgrid, density2, p, seed) {
     .Call(`_ForestFireR_generate_landscape_cpp`, Lgrid, density2, p, seed)
 }
 
-simulate_spatial_cpp <- function(T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid) {
-    .Call(`_ForestFireR_simulate_spatial_cpp`, T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid)
+simulate_spatial_cpp <- function(T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
+    .Call(`_ForestFireR_simulate_spatial_cpp`, T, Lgrid, density2, p, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, capture_fire_snapshots, fire_snapshot_min_gap)
 }
 
 generate_landscape_layers_cpp <- function(Lgrid, fill_state, background_states, pattern_states, densities, ps, seed) {
     .Call(`_ForestFireR_generate_landscape_layers_cpp`, Lgrid, fill_state, background_states, pattern_states, densities, ps, seed)
 }
 
-simulate_spatial_from_grid_cpp <- function(T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction = TRUE) {
-    .Call(`_ForestFireR_simulate_spatial_from_grid_cpp`, T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction)
+simulate_spatial_from_grid_cpp <- function(T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction = TRUE, capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
+    .Call(`_ForestFireR_simulate_spatial_from_grid_cpp`, T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction, capture_fire_snapshots, fire_snapshot_min_gap)
 }
 
 simulate_mean_field_cpp <- function(T, n1_0, n2_0, n3_0, n4_0, n5_0, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, record_dt) {

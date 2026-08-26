@@ -8,3 +8,4 @@
 .Rproj.user/
 src/*.o
 src/*.so
+.DS_Store

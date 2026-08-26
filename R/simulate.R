@@ -83,11 +83,34 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #' @param record_grid If `TRUE`, also return the initial and final grid
 #'   snapshots (`L`x`L` integer matrices) -- needed for the spatial-pattern
 #'   figures.
+#' @param capture_fire_snapshots If `TRUE`, also return every grid snapshot
+#'   captured while the fire compartment was actively non-empty (`n3 > 0`),
+#'   throttled to at most one capture per `fire_snapshot_min_gap` time
+#'   units. Use this to find an illustrative "fire in progress" grid near a
+#'   target time (e.g. Fig. 2's panels at `t=76`, `t=120`): `record_grid`'s
+#'   start/end snapshots essentially never show fire, because Table 1's
+#'   fire-spread/fire-extinction rates (~1e6/year, hours-scale) resolve any
+#'   given outbreak in a sliver of simulated time invisible to a snapshot
+#'   at an arbitrary fixed time -- an outbreak has to be searched for
+#'   explicitly, not hoped for. After the run, pick the returned
+#'   `fire_snapshot_times` entry closest to your target time and use the
+#'   matching `fire_snapshot_grids` entry; there is no guarantee one exists
+#'   near any particular time (ignition is itself a rare Poisson process --
+#'   `lambda^ig = 1e-4`/year per invader-occupied site, Table 1), so check
+#'   `length(fire_snapshot_times)` and how close the nearest one actually
+#'   is before trusting it as illustrative of that moment.
+#' @param fire_snapshot_min_gap Minimum simulated-time gap (years) between
+#'   two fire snapshots; keeps a single outbreak from filling the returned
+#'   list with near-duplicate frames. Default `0.001` (~9 hours) is well
+#'   under a typical outbreak's total duration but well above the time
+#'   between individual Gillespie events during one.
 #' @return A list with the final `time_sim` and densities `n0`..`n5`
 #'   (`n0` = total empty, `n1` = native, `n2` = invader, `n3` = fire,
 #'   `n4` = empty-after-vegetation-death, `n5` = empty-after-fire), plus
-#'   `trajectory` (a data frame, if `record_dt >= 0`) and `initial_grid` /
-#'   `final_grid` (if `record_grid = TRUE`).
+#'   `trajectory` (a data frame, if `record_dt >= 0`), `initial_grid` /
+#'   `final_grid` (if `record_grid = TRUE`), and `fire_snapshot_times` (a
+#'   numeric vector) / `fire_snapshot_grids` (a list of `L`x`L` integer
+#'   matrices, same length and order) if `capture_fire_snapshots = TRUE`.
 #' @examples
 #' \dontrun{
 #' r <- simulate_spatial(T = 20, L = 60, density2 = 0.05, p = 1,
@@ -100,7 +123,8 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
                               L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                               L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                               periodic = TRUE, seed = NULL,
-                              record_dt = -1, record_grid = FALSE) {
+                              record_dt = -1, record_grid = FALSE,
+                              capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
@@ -114,7 +138,9 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
     Lrg_01_ = 0, Lrg_02_ = Lrg_02,
     Lr_01_ = 0, Lr_02_ = 0, Lr_12_ = 0, Lr_21_ = 0,
     periodic = periodic, seed = .resolve_seed(seed),
-    record_dt = record_dt, record_grid = record_grid
+    record_dt = record_dt, record_grid = record_grid,
+    capture_fire_snapshots = capture_fire_snapshots,
+    fire_snapshot_min_gap = fire_snapshot_min_gap
   )
 }
 
@@ -318,7 +344,8 @@ simulate_spatial_from_grid <- function(T, initial_grid,
                                         L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                                         periodic = TRUE, seed = NULL,
                                         record_dt = -1, record_grid = FALSE,
-                                        check_extinction = TRUE) {
+                                        check_extinction = TRUE,
+                                        capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
@@ -335,6 +362,8 @@ simulate_spatial_from_grid <- function(T, initial_grid,
     Lr_01_ = 0, Lr_02_ = 0, Lr_12_ = 0, Lr_21_ = 0,
     periodic = periodic, seed = .resolve_seed(seed),
     record_dt = record_dt, record_grid = record_grid,
-    check_extinction = check_extinction
+    check_extinction = check_extinction,
+    capture_fire_snapshots = capture_fire_snapshots,
+    fire_snapshot_min_gap = fire_snapshot_min_gap
   )
 }

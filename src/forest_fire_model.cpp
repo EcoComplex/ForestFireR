@@ -211,7 +211,13 @@ void SeedRNG(int seed);
 // the very first step and the run would otherwise stop after a single
 // event. simulate_spatial_cpp always passes true (unchanged behavior);
 // simulate_spatial_from_grid_cpp lets the caller turn it off.
-void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction = true);
+// capture_fire_snapshots/fire_snapshot_min_gap: see the fire-snapshot
+// recording block above SpatialModelSimplified_Rec's definition for why
+// this exists (periodic time-based grid capture essentially never lands
+// during an active fire, since fire spread/extinction run ~1e6x faster
+// than vegetation dynamics -- Table 1).
+void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction = true,
+                                 bool capture_fire_snapshots = false, long double fire_snapshot_min_gap = 0.001L);
 void MeanField_Rec(long double &T, long double &dt, double n1_0, double n2_0, double n3_0, double n4_0, double n5_0);
 void MeanFieldGillespie_Rec(long double &T, long double &record_dt, long double &sysN);
 void FillGrid(int state);
@@ -3147,6 +3153,45 @@ static void PushRecording(long double t)
 }
 
 //=====================================================================
+// Fire-snapshot recording: separate from the density trajectory above --
+// captures full L x L grids (not just the n0..n5 scalars) whenever the
+// fire compartment is actively non-empty (n3 > 0), throttled to at most
+// one capture per fire_snapshot_min_gap time units. This exists because a
+// periodic, time-based grid capture (record_grid's start/end, or a
+// hypothetical "capture every record_dt") essentially never lands during
+// an active fire: Table 1's fire-spread and fire-extinction rates are
+// both ~1e6/year (hours-scale) against years-scale vegetation dynamics
+// (see check_extinction's comment above), so a single outbreak resolves
+// in a sliver of simulated time invisible to any reasonable sampling
+// interval. Scanning n3 after every accepted Gillespie event instead
+// (essentially free -- n3 is already recomputed there) reliably finds
+// every outbreak that occurs, letting a caller pick the one nearest a
+// target illustration time (e.g. Fig. 2's t=76, t=120 panels) after the
+// run completes, rather than hoping to land on one by chance.
+//=====================================================================
+vector<long double> fire_snap_time;
+vector<Rcpp::IntegerMatrix> fire_snap_grid;
+static long double fire_snap_last_time;
+
+static void ClearFireSnapshots()
+{
+    fire_snap_time.clear();
+    fire_snap_grid.clear();
+    fire_snap_last_time = -1e18L;
+}
+
+static void MaybeCaptureFireSnapshot(long double min_gap)
+{
+    if (n3 <= 0) return;
+    if (fire_snap_last_time > -1e17L && time_sim - fire_snap_last_time < min_gap) return;
+    Rcpp::IntegerMatrix g(L, L);
+    for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { g(i,j) = S[i][j]; } }
+    fire_snap_time.push_back(time_sim);
+    fire_snap_grid.push_back(g);
+    fire_snap_last_time = time_sim;
+}
+
+//=====================================================================
 // SpatialModelSimplified_Rec: same Gillespie SSA as SpatialModelSimplified,
 // but optionally records the (time, n0..n5) trajectory instead of only
 // keeping the final densities.
@@ -3154,9 +3199,11 @@ static void PushRecording(long double t)
 //   record_dt == 0 -> record every accepted event (dense, memory heavy)
 //   record_dt > 0  -> record a sample every record_dt time units
 //=====================================================================
-void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction)
+void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction,
+                                 bool capture_fire_snapshots, long double fire_snapshot_min_gap)
 {
     ClearRecording();
+    if (capture_fire_snapshots) { ClearFireSnapshots(); }
 
     long double tau;
     long double sumA, sumt;
@@ -3276,6 +3323,8 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
 
         n0=(N4+N5)/system_size; n1=N1/system_size; n2=N2/system_size;
         n3=N3/system_size; n4=N4/system_size; n5=N5/system_size;
+
+        if (capture_fire_snapshots) { MaybeCaptureFireSnapshot(fire_snapshot_min_gap); }
 
         if (record_dt > 0) {
             while (time_sim >= next_record) { PushRecording(time_sim); next_record += record_dt; }
@@ -3496,7 +3545,8 @@ Rcpp::List simulate_spatial_cpp(
     double Lrg_01_, double Lrg_02_,
     double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_,
     bool periodic, int seed,
-    double record_dt, bool record_grid)
+    double record_dt, bool record_grid,
+    bool capture_fire_snapshots = false, double fire_snapshot_min_gap = 0.001)
 {
     L_01=L_01_; L_02=L_02_; L_10=L_10_; L_20=L_20_;
     L_12=L_12_; L_21=L_21_; L_30=L_30_;
@@ -3521,7 +3571,8 @@ Rcpp::List simulate_spatial_cpp(
 
     long double T_ld = T;
     long double record_dt_ld = record_dt;
-    SpatialModelSimplified_Rec(T_ld, record_dt_ld);
+    long double fire_snapshot_min_gap_ld = fire_snapshot_min_gap;
+    SpatialModelSimplified_Rec(T_ld, record_dt_ld, true, capture_fire_snapshots, fire_snapshot_min_gap_ld);
 
     Rcpp::List result;
     result["time_sim"] = (double) time_sim;
@@ -3548,6 +3599,12 @@ Rcpp::List simulate_spatial_cpp(
         Rcpp::IntegerMatrix final_grid(L, L);
         for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { final_grid(i,j) = S[i][j]; } }
         result["final_grid"] = final_grid;
+    }
+    if (capture_fire_snapshots) {
+        Rcpp::List fsnap_grids(fire_snap_grid.size());
+        for (size_t i=0;i<fire_snap_grid.size();i++) { fsnap_grids[i] = fire_snap_grid[i]; }
+        result["fire_snapshot_times"] = Rcpp::wrap(fire_snap_time);
+        result["fire_snapshot_grids"] = fsnap_grids;
     }
     return result;
 }
@@ -3605,7 +3662,8 @@ Rcpp::List simulate_spatial_from_grid_cpp(
     double Lrg_01_, double Lrg_02_,
     double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_,
     bool periodic, int seed,
-    double record_dt, bool record_grid, bool check_extinction = true)
+    double record_dt, bool record_grid, bool check_extinction = true,
+    bool capture_fire_snapshots = false, double fire_snapshot_min_gap = 0.001)
 {
     L_01=L_01_; L_02=L_02_; L_10=L_10_; L_20=L_20_;
     L_12=L_12_; L_21=L_21_; L_30=L_30_;
@@ -3633,7 +3691,8 @@ Rcpp::List simulate_spatial_from_grid_cpp(
 
     long double T_ld = T;
     long double record_dt_ld = record_dt;
-    SpatialModelSimplified_Rec(T_ld, record_dt_ld, check_extinction);
+    long double fire_snapshot_min_gap_ld = fire_snapshot_min_gap;
+    SpatialModelSimplified_Rec(T_ld, record_dt_ld, check_extinction, capture_fire_snapshots, fire_snapshot_min_gap_ld);
 
     Rcpp::List result;
     result["time_sim"] = (double) time_sim;
@@ -3660,6 +3719,12 @@ Rcpp::List simulate_spatial_from_grid_cpp(
         Rcpp::IntegerMatrix final_grid(L, L);
         for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { final_grid(i,j) = S[i][j]; } }
         result["final_grid"] = final_grid;
+    }
+    if (capture_fire_snapshots) {
+        Rcpp::List fsnap_grids(fire_snap_grid.size());
+        for (size_t i=0;i<fire_snap_grid.size();i++) { fsnap_grids[i] = fire_snap_grid[i]; }
+        result["fire_snapshot_times"] = Rcpp::wrap(fire_snap_time);
+        result["fire_snapshot_grids"] = fsnap_grids;
     }
     return result;
 }
