@@ -69,6 +69,57 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// generate_landscape_layers_cpp
+Rcpp::IntegerMatrix generate_landscape_layers_cpp(int Lgrid, int fill_state, Rcpp::IntegerVector background_states, Rcpp::IntegerVector pattern_states, Rcpp::NumericVector densities, Rcpp::NumericVector ps, int seed);
+RcppExport SEXP _ForestFireR_generate_landscape_layers_cpp(SEXP LgridSEXP, SEXP fill_stateSEXP, SEXP background_statesSEXP, SEXP pattern_statesSEXP, SEXP densitiesSEXP, SEXP psSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type Lgrid(LgridSEXP);
+    Rcpp::traits::input_parameter< int >::type fill_state(fill_stateSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type background_states(background_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type pattern_states(pattern_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type densities(densitiesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ps(psSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(generate_landscape_layers_cpp(Lgrid, fill_state, background_states, pattern_states, densities, ps, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// simulate_spatial_from_grid_cpp
+Rcpp::List simulate_spatial_from_grid_cpp(double T, Rcpp::IntegerMatrix initial_grid, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, bool periodic, int seed, double record_dt, bool record_grid, bool check_extinction);
+RcppExport SEXP _ForestFireR_simulate_spatial_from_grid_cpp(SEXP TSEXP, SEXP initial_gridSEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP periodicSEXP, SEXP seedSEXP, SEXP record_dtSEXP, SEXP record_gridSEXP, SEXP check_extinctionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type T(TSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type initial_grid(initial_gridSEXP);
+    Rcpp::traits::input_parameter< double >::type L_01_(L_01_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_02_(L_02_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_10_(L_10_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_20_(L_20_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_12_(L_12_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_21_(L_21_SEXP);
+    Rcpp::traits::input_parameter< double >::type L_30_(L_30_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lig_13_(Lig_13_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lig_23_(Lig_23_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lsp_13_(Lsp_13_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lsp_23_(Lsp_23_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lrg_01_(Lrg_01_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lrg_02_(Lrg_02_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lr_01_(Lr_01_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lr_02_(Lr_02_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lr_12_(Lr_12_SEXP);
+    Rcpp::traits::input_parameter< double >::type Lr_21_(Lr_21_SEXP);
+    Rcpp::traits::input_parameter< bool >::type periodic(periodicSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< double >::type record_dt(record_dtSEXP);
+    Rcpp::traits::input_parameter< bool >::type record_grid(record_gridSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_extinction(check_extinctionSEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_spatial_from_grid_cpp(T, initial_grid, L_01_, L_02_, L_10_, L_20_, L_12_, L_21_, L_30_, Lig_13_, Lig_23_, Lsp_13_, Lsp_23_, Lrg_01_, Lrg_02_, Lr_01_, Lr_02_, Lr_12_, Lr_21_, periodic, seed, record_dt, record_grid, check_extinction));
+    return rcpp_result_gen;
+END_RCPP
+}
 // simulate_mean_field_cpp
 Rcpp::DataFrame simulate_mean_field_cpp(double T, double n1_0, double n2_0, double n3_0, double n4_0, double n5_0, double L_01_, double L_02_, double L_10_, double L_20_, double L_12_, double L_21_, double L_30_, double Lig_13_, double Lig_23_, double Lsp_13_, double Lsp_23_, double Lrg_01_, double Lrg_02_, double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_, double record_dt);
 RcppExport SEXP _ForestFireR_simulate_mean_field_cpp(SEXP TSEXP, SEXP n1_0SEXP, SEXP n2_0SEXP, SEXP n3_0SEXP, SEXP n4_0SEXP, SEXP n5_0SEXP, SEXP L_01_SEXP, SEXP L_02_SEXP, SEXP L_10_SEXP, SEXP L_20_SEXP, SEXP L_12_SEXP, SEXP L_21_SEXP, SEXP L_30_SEXP, SEXP Lig_13_SEXP, SEXP Lig_23_SEXP, SEXP Lsp_13_SEXP, SEXP Lsp_23_SEXP, SEXP Lrg_01_SEXP, SEXP Lrg_02_SEXP, SEXP Lr_01_SEXP, SEXP Lr_02_SEXP, SEXP Lr_12_SEXP, SEXP Lr_21_SEXP, SEXP record_dtSEXP) {
@@ -140,6 +191,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ForestFireR_set_seed_cpp", (DL_FUNC) &_ForestFireR_set_seed_cpp, 1},
     {"_ForestFireR_generate_landscape_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_cpp, 4},
     {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 25},
+    {"_ForestFireR_generate_landscape_layers_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_layers_cpp, 7},
+    {"_ForestFireR_simulate_spatial_from_grid_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_from_grid_cpp, 24},
     {"_ForestFireR_simulate_mean_field_cpp", (DL_FUNC) &_ForestFireR_simulate_mean_field_cpp, 24},
     {"_ForestFireR_simulate_mean_field_stochastic_cpp", (DL_FUNC) &_ForestFireR_simulate_mean_field_stochastic_cpp, 22},
     {NULL, NULL, 0}

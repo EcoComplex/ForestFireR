@@ -186,7 +186,16 @@ void InitialConditionInClusters(long double &);
 bool Boundaries(int &, int &);
 void InitialConditionFromRandomness(long double &, int &);
 long double Entropy(long double &);
-void InitialConditionNonHomogeneous(long double &, long double &);
+// state1_param/state2_param generalize the original hardcoded "background
+// = 1, pattern = 2" landscape (native vs. invader) to an arbitrary pair of
+// grid states, and reset_grid controls whether the whole grid is first
+// filled with state1_param (the original, single-layer behavior) or left
+// as-is so a pattern can be grown into the surviving background of a prior
+// call -- see FillGrid()/TallyGridToCompartments() below and the
+// generate_landscape_layers_cpp/simulate_spatial_from_grid_cpp Rcpp
+// exports, added to build multi-species / fire-over-invader landscapes
+// (Figs. 8-11) that a single background/pattern pair can't express.
+void InitialConditionNonHomogeneous(long double &, long double &, int state1_param = 1, int state2_param = 2, bool reset_grid = true);
 long double H();
 
 //---- Added for R/Rcpp integration ----
@@ -194,9 +203,19 @@ void GridMap(int ix, int jx, int Lp, int &k);
 void ReverseGridMap(int &ix, int &jx, int Lp, int k);
 void AllocateGrids(int newL);
 void SeedRNG(int seed);
-void SpatialModelSimplified_Rec(long double &T, long double &record_dt);
+// check_extinction reproduces the original model's early stop once native
+// density n1 drops below 0.0001 (a sensible default when n1 starts high,
+// as in every figure the paper itself reproduces this way). It's wrong,
+// though, for an initial condition built with no native vegetation at all
+// -- e.g. Figs. 10-11's fire-over-invader landscape -- where n1 is 0 from
+// the very first step and the run would otherwise stop after a single
+// event. simulate_spatial_cpp always passes true (unchanged behavior);
+// simulate_spatial_from_grid_cpp lets the caller turn it off.
+void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction = true);
 void MeanField_Rec(long double &T, long double &dt, double n1_0, double n2_0, double n3_0, double n4_0, double n5_0);
 void MeanFieldGillespie_Rec(long double &T, long double &record_dt, long double &sysN);
+void FillGrid(int state);
+void TallyGridToCompartments();
 //---------------------------------------
 
 
@@ -458,35 +477,97 @@ void SeedRNG(int seed)
     }
 }
 
-void InitialConditionNonHomogeneous(long double &density2, long double &q22)
+//---- Fill the entire grid with a single state (e.g. an all-invader or
+// all-post-fire-empty base before layering a pattern on top of it). ----
+void FillGrid(int state)
+{
+    for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { S[i][j]=state; } }
+}
+
+//---- Recompute N0..N5/n0..n5 by scanning the whole grid, rather than
+// assuming only states 1/2 (the original single-species landscape's only
+// possible values) are present. Needed once landscapes can contain any of
+// the model's 6 states (multi-layer construction) or are supplied directly
+// from R. ----
+void TallyGridToCompartments()
+{
+    N0=0; N1=0; N2=0; N3=0; N4=0; N5=0;
+    for (int i=0;i<L;i++)
+    {
+        for (int j=0;j<L;j++)
+        {
+            switch (S[i][j])
+            {
+                case 0: N0++; break;
+                case 1: N1++; break;
+                case 2: N2++; break;
+                case 3: N3++; break;
+                case 4: N4++; break;
+                case 5: N5++; break;
+            }
+        }
+    }
+    n0=(N4+N5)/system_size; n1=N1/system_size; n2=N2/system_size;
+    n3=N3/system_size; n4=N4/system_size; n5=N5/system_size;
+}
+
+void InitialConditionNonHomogeneous(long double &density2, long double &q22, int state1_param, int state2_param, bool reset_grid)
 {
 
 
-    int state1=1;
-    int state2=2; 
-    
-    
-    vector<int> cluster; 
+    int state1=state1_param;
+    int state2=state2_param;
+
+
+    vector<int> cluster;
     long double nclusters=0;
     int random_int;
     int ix,jx;
-    
-     
-    
-    for(int i=0;i<L;i++)
+
+
+
+    if (reset_grid)
     {
-        for(int j=0;j<L;j++)
+        for(int i=0;i<L;i++)
         {
-            S[i][j]=state1;
+            for(int j=0;j<L;j++)
+            {
+                S[i][j]=state1;
+            }
         }
-    }    
-    
+    }
+
     //Seed
-    random_int = (rand() % (N));
+    // Robustness/generality fix: the original code picked a uniformly
+    // random cell out of ALL N cells and just assumed it was state1
+    // (always true when reset_grid just filled the whole grid with
+    // state1). When reset_grid is false -- placing a second layer's
+    // pattern into whatever background cells a prior layer left behind --
+    // that assumption can pick a cell already claimed by another state, so
+    // we instead collect the actual state1 cells and seed from among
+    // those. A single full-grid scan is trivial next to the O(target
+    // density * N) growth loop below, and (unlike rejection sampling)
+    // can't hang if state1 is sparse.
+    {
+        vector<int> bg_candidates;
+        bg_candidates.reserve(N);
+        for (int i=0;i<L;i++)
+        {
+            for (int j=0;j<L;j++)
+            {
+                if (S[i][j]==state1) { int idx; GridMap(i,j,L,idx); bg_candidates.push_back(idx); }
+            }
+        }
+        if (bg_candidates.empty())
+        {
+            Rcpp::stop("InitialConditionNonHomogeneous: no cells in the requested background state are left to seed the pattern from (background fully consumed by a prior layer).");
+        }
+        random_int = bg_candidates[rand() % bg_candidates.size()];
+    }
     ReverseGridMap(ix,jx,L,random_int);
     S[ix][jx]=state2;
     cluster.insert(cluster.end(), random_int);
-    nclusters++; 
+    nclusters++;
     
     
 
@@ -515,15 +596,26 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
     
     
     //Estimamos p00,p01,p11 inicial
+    // Generality fix: when this grid already carries a third state (a
+    // prior layer's pattern, or an unrelated background), a neighbor pair
+    // touching that state isn't a state1/state2 pair at all and must not
+    // be folded into est11/est12/est22 (or its denominator, num_tuples) --
+    // otherwise the "similar"/"mixed" classification below, which assumes
+    // every pair mean falls at exactly threshold1/2/3, silently miscounts
+    // it. In the original single-layer usage the whole grid is always
+    // exactly {state1,state2} at this point, so this guard is a no-op
+    // there (every pair already qualifies).
     long double num_tuples=0;
     for(int i=0;i<L;i++)
     {
         for(int j=0;j<L;j++)
         {
+            bool center_in = (S[i][j]==state1 || S[i][j]==state2);
+
             //Vecino1
             vi=i+1;
             vj=j;
-            if(vi>=0 && vi<L)
+            if(vi>=0 && vi<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
                mean=(S[vi][vj]+S[i][j])*0.5;
                if(mean<threshold2){est11++;}
@@ -531,23 +623,11 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
                if(mean>threshold2){est22++;}
                num_tuples++;
             }
-            
+
             //Vecino2
             vi=i-1;
             vj=j;
-            if(vi>=0 && vi<L)
-            {
-               mean=(S[vi][vj]+S[i][j])*0.5;
-               if(mean<threshold2){est11++;}
-               if(mean>threshold1 && mean<threshold3){est12++;}
-               if(mean>threshold2){est22++;}
-               num_tuples++;
-            }  
-            
-            //Vecino3
-            vi=i;
-            vj=j+1;
-            if(vj>=0 && vj<L)
+            if(vi>=0 && vi<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
                mean=(S[vi][vj]+S[i][j])*0.5;
                if(mean<threshold2){est11++;}
@@ -555,19 +635,31 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
                if(mean>threshold2){est22++;}
                num_tuples++;
             }
-            
-            //Vecino4
+
+            //Vecino3
             vi=i;
-            vj=j-1;
-            if(vj>=0 && vj<L)
+            vj=j+1;
+            if(vj>=0 && vj<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
                mean=(S[vi][vj]+S[i][j])*0.5;
                if(mean<threshold2){est11++;}
                if(mean>threshold1 && mean<threshold3){est12++;}
                if(mean>threshold2){est22++;}
                num_tuples++;
-            }  
-            
+            }
+
+            //Vecino4
+            vi=i;
+            vj=j-1;
+            if(vj>=0 && vj<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
+            {
+               mean=(S[vi][vj]+S[i][j])*0.5;
+               if(mean<threshold2){est11++;}
+               if(mean>threshold1 && mean<threshold3){est12++;}
+               if(mean>threshold2){est22++;}
+               num_tuples++;
+            }
+
         }
     }
     dest11=est11/num_tuples;
@@ -594,10 +686,39 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
     
 
 
+    // Robustness fix: when this call is one layer of a multi-layer
+    // landscape (see generate_landscape_layers_cpp), background_state may
+    // hold far fewer cells than density2*N calls for -- e.g. a second
+    // layer asking for more cells than a prior layer left available. The
+    // relaxed fallbacks below assume *some* background cell always
+    // remains to find; once it's truly exhausted, that assumption breaks
+    // and the search (and this whole outer loop) would otherwise spin
+    // forever. bg_remaining tracks how many state1 cells are actually
+    // left (one O(N) scan up front, then decremented per placement below)
+    // so the outer loop can stop and warn instead of hanging when the
+    // requested density can't be reached.
+    long bg_remaining = 0;
+    for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { if (S[i][j]==state1) bg_remaining++; } }
+    bool warned_bg_exhausted = false;
+
     bool relaxed1=false;
     bool relaxed2=false;
     while(cluster.size()<density2*N-1)
     {
+       if (bg_remaining <= 0)
+       {
+           if (!warned_bg_exhausted)
+           {
+               warned_bg_exhausted = true;
+               Rcpp::Rcout << "[ForestFireR] generate_landscape: stopping this layer early -- "
+                              "the background state ran out (only " << cluster.size() <<
+                              " of the requested " << (long)(density2*N-1) <<
+                              " cells could be placed). This happens when a layer's target "
+                              "density leaves less background than a later layer needs; "
+                              "check your generate_landscape_layers() density budget." << std::endl;
+           }
+           break;
+       }
 
        //Seleccionamos un vacio y un estado=1 pegado al aglomerado
        //
@@ -772,14 +893,20 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
       
       
      //---------- //Hacemos los cambios de las probabilidades para (vi,vj) lejos del cluster
-           ReverseGridMap(vi,vj,L,position1);  
+     // (Both this block and the "cerca cluster" block below carry the same
+     // state1/state2 membership guard added to the num_tuples loop above,
+     // for the same reason: a neighbor belonging to some third state --
+     // another layer's already-placed pattern -- isn't part of this
+     // layer's state1/state2 pair statistics and must be skipped, not
+     // treated as if it were state1.)
+           ReverseGridMap(vi,vj,L,position1);
            est11p1=est11;
            est12p1=est12;
            est22p1=est22;
        
            zi=vi+1;
            zj=vj;
-           if(zi>=0 && zi<L)
+           if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -795,7 +922,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
            
            zi=vi-1;
            zj=vj;
-           if(zi>=0 && zi<L)
+           if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -811,7 +938,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
  
            zi=vi;
            zj=vj+1;
-           if(zj>=0 && zj<L)
+           if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -827,7 +954,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
                      
            zi=vi;
            zj=vj-1;
-           if(zj>=0 && zj<L)
+           if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -857,7 +984,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
        
            zi=vi+1;
            zj=vj;
-           if(zi>=0 && zi<L)
+           if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -873,7 +1000,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
            
            zi=vi-1;
            zj=vj;
-           if(zi>=0 && zi<L)
+           if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -889,7 +1016,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
  
            zi=vi;
            zj=vj+1;
-           if(zj>=0 && zj<L)
+           if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -905,7 +1032,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
                      
            zi=vi;
            zj=vj-1;
-           if(zj>=0 && zj<L)
+           if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
               mean_ant=(S[zi][zj]+state1)*0.5;
               mean_pos=(S[zi][zj]+state2)*0.5;
@@ -942,6 +1069,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
              ReverseGridMap(vi,vj,L,position1);
              S[vi][vj]=state2;
              cluster.insert(cluster.end(),position1);
+             bg_remaining--;
 
              est11=est11p1;
              est12=est12p1;
@@ -952,6 +1080,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
              ReverseGridMap(vi,vj,L,position2);
              S[vi][vj]=state2;
              cluster.insert(cluster.end(),position2);
+             bg_remaining--;
 
              est11=est11p2;
              est12=est12p2;
@@ -962,28 +1091,18 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22)
      
      
     
-N0=0;
-N1=0;
-N2=0;
-N3=0;
-N4=0;
-N5=0;
-for(int i=0;i<L;i++)
-{
-    for(int j=0;j<L;j++)
-    {
-        if(S[i][j]==1){N1++;}
-        if(S[i][j]==2){N2++;}
-    }
-}
-n0=(N4+N5)/system_size;
-n1=N1/system_size;
-n2=N2/system_size;
-n3=N3/system_size;
-n4=N4/system_size;
-n5=N5/system_size;
-
- 
+// Generality fix: the original code only ever tallied states 1/2 here
+// (N0/N3/N4/N5 always stayed 0), which was exactly right as long as the
+// grid could only ever contain those two states -- true for the original
+// single-layer landscape, no longer true once a landscape can be built
+// from several layered calls (e.g. two species over an empty background,
+// or fire over an invader background -- see generate_landscape_layers_cpp)
+// that leave states 0, 3, 4 and/or 5 on the grid too. TallyGridToCompartments()
+// scans and counts all 6 states; for the original single-layer case this
+// gives identical N1/N2 (and N0=N3=N4=N5=0, since those states never
+// appear there either) -- purely additive, not a behavior change for
+// existing callers.
+TallyGridToCompartments();
 
 }
 
@@ -3035,7 +3154,7 @@ static void PushRecording(long double t)
 //   record_dt == 0 -> record every accepted event (dense, memory heavy)
 //   record_dt > 0  -> record a sample every record_dt time units
 //=====================================================================
-void SpatialModelSimplified_Rec(long double &T, long double &record_dt)
+void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction)
 {
     ClearRecording();
 
@@ -3067,7 +3186,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt)
         n0=(N4+N5)/system_size; n1=N1/system_size; n2=N2/system_size;
         n3=N3/system_size; n4=N4/system_size; n5=N5/system_size;
 
-        if (n1 < 0.0001) { ext = true; }
+        if (check_extinction && n1 < 0.0001) { ext = true; }
 
         random = ((double) rand() / (RAND_MAX));
         tau = -log(random) / sumA;
@@ -3426,6 +3545,118 @@ Rcpp::List simulate_spatial_cpp(
     }
     if (record_grid) {
         result["initial_grid"] = initial_grid;
+        Rcpp::IntegerMatrix final_grid(L, L);
+        for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { final_grid(i,j) = S[i][j]; } }
+        result["final_grid"] = final_grid;
+    }
+    return result;
+}
+
+// Builds a landscape from a SEQUENCE of layers instead of a single
+// background/pattern pair -- needed for initial conditions the original
+// generator can't express, e.g. two species placed independently over a
+// shared empty background (Figs. 8-9: 5% native + 5% invader over an
+// all-post-fire-empty domain), or a small pattern placed over an
+// already-uniform domain (Figs. 10-11: 1% fire over an all-invader
+// domain). Grid is first filled entirely with fill_state, then each layer
+// k grows pattern_states[k] to densities[k]*L*L cells (as a fraction of
+// the WHOLE grid, matching how density2 already works elsewhere) with
+// heterogeneity ps[k], drawing candidates only from cells still in
+// background_states[k] -- so layers are consumed in order and each one
+// only ever overwrites background left by the layers before it. All four
+// vector arguments must have the same length (one entry per layer).
+// [[Rcpp::export]]
+Rcpp::IntegerMatrix generate_landscape_layers_cpp(int Lgrid, int fill_state,
+    Rcpp::IntegerVector background_states, Rcpp::IntegerVector pattern_states,
+    Rcpp::NumericVector densities, Rcpp::NumericVector ps, int seed)
+{
+    int nlayers = pattern_states.size();
+    if (background_states.size() != nlayers || densities.size() != nlayers || ps.size() != nlayers) {
+        Rcpp::stop("generate_landscape_layers_cpp: background_states, pattern_states, densities and ps must all have the same length.");
+    }
+
+    AllocateGrids(Lgrid);
+    SeedRNG(seed);
+    FillGrid(fill_state);
+
+    for (int k=0; k<nlayers; k++) {
+        long double density_ld = densities[k];
+        long double p_ld = ps[k];
+        InitialConditionNonHomogeneous(density_ld, p_ld, background_states[k], pattern_states[k], false);
+    }
+
+    Rcpp::IntegerMatrix grid(L, L);
+    for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { grid(i,j) = S[i][j]; } }
+    return grid;
+}
+
+// Runs the spatial Gillespie dynamics from a landscape supplied directly by
+// R (typically from generate_landscape_layers_cpp) instead of building one
+// internally from density2/p -- the counterpart simulate_spatial_cpp needs
+// for any initial condition beyond its own single background/pattern
+// generator, e.g. the Fig. 8-11 comparisons.
+// [[Rcpp::export]]
+Rcpp::List simulate_spatial_from_grid_cpp(
+    double T, Rcpp::IntegerMatrix initial_grid,
+    double L_01_, double L_02_, double L_10_, double L_20_,
+    double L_12_, double L_21_,
+    double L_30_, double Lig_13_, double Lig_23_,
+    double Lsp_13_, double Lsp_23_,
+    double Lrg_01_, double Lrg_02_,
+    double Lr_01_, double Lr_02_, double Lr_12_, double Lr_21_,
+    bool periodic, int seed,
+    double record_dt, bool record_grid, bool check_extinction = true)
+{
+    L_01=L_01_; L_02=L_02_; L_10=L_10_; L_20=L_20_;
+    L_12=L_12_; L_21=L_21_; L_30=L_30_;
+    Lig_13=Lig_13_; Lig_23=Lig_23_;
+    Lsp_13=Lsp_13_; Lsp_23=Lsp_23_;
+    Lrg_01=Lrg_01_; Lrg_02=Lrg_02_;
+    Lr_01=Lr_01_; Lr_02=Lr_02_; Lr_12=Lr_12_; Lr_21=Lr_21_;
+    PeriodicBoundaryConditions = periodic;
+
+    int Lgrid = initial_grid.nrow();
+    if (initial_grid.ncol() != Lgrid) {
+        Rcpp::stop("simulate_spatial_from_grid_cpp: initial_grid must be square.");
+    }
+
+    AllocateGrids(Lgrid);
+    SeedRNG(seed);
+    for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { S[i][j] = initial_grid(i,j); } }
+    TallyGridToCompartments();
+
+    Rcpp::IntegerMatrix initial_grid_out;
+    if (record_grid) {
+        initial_grid_out = Rcpp::IntegerMatrix(L, L);
+        for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { initial_grid_out(i,j) = S[i][j]; } }
+    }
+
+    long double T_ld = T;
+    long double record_dt_ld = record_dt;
+    SpatialModelSimplified_Rec(T_ld, record_dt_ld, check_extinction);
+
+    Rcpp::List result;
+    result["time_sim"] = (double) time_sim;
+    result["n0"] = (double) n0;
+    result["n1"] = (double) n1;
+    result["n2"] = (double) n2;
+    result["n3"] = (double) n3;
+    result["n4"] = (double) n4;
+    result["n5"] = (double) n5;
+
+    if (record_dt >= 0) {
+        result["trajectory"] = Rcpp::DataFrame::create(
+            Rcpp::Named("time") = Rcpp::wrap(rec_time),
+            Rcpp::Named("n0") = Rcpp::wrap(rec_n0),
+            Rcpp::Named("n1") = Rcpp::wrap(rec_n1),
+            Rcpp::Named("n2") = Rcpp::wrap(rec_n2),
+            Rcpp::Named("n3") = Rcpp::wrap(rec_n3),
+            Rcpp::Named("n4") = Rcpp::wrap(rec_n4),
+            Rcpp::Named("n5") = Rcpp::wrap(rec_n5)
+        );
+    }
+    if (record_grid) {
+        result["initial_grid"] = initial_grid_out;
         Rcpp::IntegerMatrix final_grid(L, L);
         for (int i=0;i<L;i++) { for (int j=0;j<L;j++) { final_grid(i,j) = S[i][j]; } }
         result["final_grid"] = final_grid;

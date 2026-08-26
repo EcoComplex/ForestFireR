@@ -112,6 +112,37 @@ of any specific published panel.
   `eta_inv`, `p`) with `xi2lambda()`/`eta2lambda()` handling the conversion
   to the underlying rate constants, and `default_rates()` gives Table 1's
   baseline values.
+- `generate_landscape_layers()` + `simulate_spatial_from_grid()`: the
+  original model can only ever place one pattern species over one
+  background (`generate_landscape()`'s `density2`/`p`, e.g. invader over
+  native). Figs. 8-11 need initial conditions that don't fit that shape --
+  two species placed *independently* over a shared empty background (5%
+  native + 5% invader over an all-`empty_postfire` domain), or a small
+  pattern placed over an already-uniform domain (1% fire over an
+  all-invader domain). `generate_landscape_layers()` builds these by
+  filling the whole grid with one state and then growing a *sequence* of
+  layers onto it, each layer's candidates restricted to whatever
+  background the layers before it left behind; `simulate_spatial_from_grid()`
+  then runs the usual spatial dynamics starting from that grid instead of
+  building one internally. See `FF_STATE` for the grid's state codes
+  (`native`/`invader`/`fire`/`empty`/`empty_postfire`) and each function's
+  documentation for worked examples. Two things to know before using this:
+  - **Native-extinction early stop.** The engine's Gillespie loop treats
+    native density dropping below `0.0001` as extinction and stops the run
+    there -- correct for every figure the paper's own `density2`/`p`
+    initial conditions produce (native always starts abundant), but wrong
+    for an `initial_grid` built with no native vegetation at all (Figs.
+    10-11's fire-over-invader domain): `n1` is `0` from the first step, so
+    the run would otherwise stop after a single event. Pass
+    `check_extinction = FALSE` to `simulate_spatial_from_grid()` whenever
+    `initial_grid` has no native vegetation by design.
+  - **Layer density budget.** A layer's target (`density * L*L` cells) can
+    exceed what's actually left in its `background` state (e.g. two
+    layers' densities summing to more than what `fill_state` provided).
+    When that happens the layer stops early -- rather than hang trying to
+    reach an unreachable target, using the same attempt-limit-plus-relaxation
+    approach as the `generate_landscape()` fix above -- and prints a
+    one-time warning naming how many cells it actually managed to place.
 
 ## Validation
 
