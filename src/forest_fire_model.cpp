@@ -3213,6 +3213,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
     int candidatex, candidatey;
     int nx, ny, nk;
     long double next_record = 0;
+    long long resync_counter = 0;
 
     sumA = 0;
     for (int k = 0; k < N; k++) {
@@ -3243,29 +3244,56 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         sumt = 0;
         bool update = false;
         int k = 0;
-        while (update == false && sumA != 0) {
+        auto apply_reaction = [&](int kk, int jj) {
+            ReverseGridMap(ix, jx, L, kk);
+            if (jj==0)  { N4--; N1++; S[ix][jx]=1; }
+            if (jj==1)  { S[ix][jx]=4; N1--; N4++; }
+            if (jj==2)  { N4--; N2++; S[ix][jx]=2; }
+            if (jj==3)  { S[ix][jx]=4; N2--; N4++; }
+            if (jj==4)  { S[ix][jx]=2; N1--; N2++; }
+            if (jj==5)  { S[ix][jx]=1; N2--; N1++; }
+            if (jj==6)  { S[ix][jx]=3; N1--; N3++; }
+            if (jj==7)  { S[ix][jx]=3; N2--; N3++; }
+            if (jj==8)  { S[ix][jx]=5; N3--; N5++; }
+            if (jj==9)  { S[ix][jx]=1; N5--; N1++; }
+            if (jj==10) { S[ix][jx]=2; N5--; N2++; }
+            if (jj==11) { N5--; N1++; S[ix][jx]=1; }
+            if (jj==12) { N5--; N2++; S[ix][jx]=2; }
+            candidatex = ix; candidatey = jx; candidatek = kk;
+        };
+        // BUGFIX: this loop used to run with no upper bound on k. A[][] only
+        // has N rows (see AllocateGrids), so once long-double round-off
+        // accumulated in sumA/sum_aux over a long run (paper scale means
+        // millions of Gillespie steps at L=100, T_max up to 5000) left
+        // `random` outside every (k,j) interval actually scanned, k walked
+        // past N-1 and read A[k] out of bounds -- an unmapped-heap read that
+        // eventually segfaults ("*** caught segfault *** address 0x0, cause
+        // 'invalid permissions'" from inside simulate_spatial_cpp). Bounding
+        // k < N plus the deterministic fallback below fix that; the periodic
+        // sumA resync further down keeps the round-off small so the fallback
+        // is a rare safety net rather than something regularly exercised.
+        while (update == false && sumA != 0 && k < N) {
             for (int j = 0; j < r; j++) {
                 if (sumt / sumA <= random && random < (sumt + A[k][j]) / sumA) {
-                    ReverseGridMap(ix, jx, L, k);
-                    if (j==0)  { N4--; N1++; S[ix][jx]=1; }
-                    if (j==1)  { S[ix][jx]=4; N1--; N4++; }
-                    if (j==2)  { N4--; N2++; S[ix][jx]=2; }
-                    if (j==3)  { S[ix][jx]=4; N2--; N4++; }
-                    if (j==4)  { S[ix][jx]=2; N1--; N2++; }
-                    if (j==5)  { S[ix][jx]=1; N2--; N1++; }
-                    if (j==6)  { S[ix][jx]=3; N1--; N3++; }
-                    if (j==7)  { S[ix][jx]=3; N2--; N3++; }
-                    if (j==8)  { S[ix][jx]=5; N3--; N5++; }
-                    if (j==9)  { S[ix][jx]=1; N5--; N1++; }
-                    if (j==10) { S[ix][jx]=2; N5--; N2++; }
-                    if (j==11) { N5--; N1++; S[ix][jx]=1; }
-                    if (j==12) { N5--; N2++; S[ix][jx]=2; }
-                    candidatex = ix; candidatey = jx; candidatek = k;
+                    apply_reaction(k, j);
                     update = true;
                 }
                 sumt = sumt + A[k][j];
             }
             k++;
+        }
+        if (!update && sumA != 0) {
+            // Round-off left `random` unmatched after scanning every (k,j)
+            // pair -- deterministically take the last reaction with a
+            // non-zero rate instead of falling through with
+            // candidatex/candidatey/candidatek left at whatever the
+            // PREVIOUS accepted event set them to (or uninitialized, on the
+            // very first event of the run).
+            int fk = N - 1, fj = r - 1;
+            while (fk >= 0 && A[fk][fj] <= 0) {
+                if (fj == 0) { fj = r - 1; fk--; } else { fj--; }
+            }
+            if (fk >= 0) { apply_reaction(fk, fj); update = true; }
         }
 
         long double sum_aux = sumA;
@@ -3320,6 +3348,22 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
 
         sumA = sum_aux;
         if (sumA < 0.00000001) { sumA = 0; }
+
+        // Periodically recompute sumA exactly from A[][] instead of trusting
+        // the running +/- update above indefinitely -- long double round-off
+        // accumulates over a long run and is what lets `random` fall outside
+        // every scanned (k,j) interval in the selection loop above. A[][]
+        // itself is fine (each entry is refreshed via VegetationFireModel_Rates
+        // right when its cell or a neighbor changes); only this scalar total
+        // drifts. This full O(N*r) pass is cheap when amortized over 20000
+        // events.
+        resync_counter++;
+        if (resync_counter % 20000 == 0) {
+            long double resynced = 0;
+            for (int kk = 0; kk < N; kk++) { for (int jj = 0; jj < r; jj++) { resynced += A[kk][jj]; } }
+            sumA = resynced;
+            if (sumA < 0.00000001) { sumA = 0; }
+        }
 
         n0=(N4+N5)/system_size; n1=N1/system_size; n2=N2/system_size;
         n3=N3/system_size; n4=N4/system_size; n5=N5/system_size;
