@@ -196,6 +196,7 @@ long double Entropy(long double &);
 // exports, added to build multi-species / fire-over-invader landscapes
 // (Figs. 8-11) that a single background/pattern pair can't express.
 void InitialConditionNonHomogeneous(long double &, long double &, int state1_param = 1, int state2_param = 2, bool reset_grid = true);
+
 long double H();
 
 //---- Added for R/Rcpp integration ----
@@ -979,9 +980,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
       
       
            Dp1=fabs(dest11p1-exp11)+fabs(dest12p1-exp12)+fabs(dest22p1-exp22);
-      
 
-      
+
+
      //---------- //Hacmos los cambios de las probabilidades para (vi,vj) cerca cluster
            ReverseGridMap(vi,vj,L,position2);  
            est11p2=est11;
@@ -1111,7 +1112,6 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
 TallyGridToCompartments();
 
 }
-
 
 
 
@@ -3571,6 +3571,15 @@ void set_seed_cpp(int seed) {
 Rcpp::IntegerMatrix generate_landscape_cpp(int Lgrid, double density2, double p, int seed) {
     AllocateGrids(Lgrid);
     SeedRNG(seed);
+    // Uses the originally coded "grow from empty, Case A/Case B" procedure
+    // (see its own header comment, and Source/forest_fire_model.cpp for the
+    // untouched reference version). A faithful reimplementation of Hiebeler
+    // (2000)'s own algorithm was tried here too and decisively rejected for
+    // this use case (worse cluster-shape match, occasional non-convergence,
+    // ~150x slower, and unable to represent this figure's low-density-with-
+    // low-p combinations at all under Hiebeler's own validity constraint) --
+    // see figA1_hiebeler_landscape_fix project memory / commit history for
+    // the comparison; removed from this file entirely (2026-09).
     long double density2_ld = density2;
     long double p_ld = p;
     InitialConditionNonHomogeneous(density2_ld, p_ld);
