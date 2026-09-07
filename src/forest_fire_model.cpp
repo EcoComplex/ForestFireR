@@ -581,9 +581,24 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
 
     
     
-    long double threshold1=(state1+state1)*0.5;   //-> 1
-    long double threshold2=(state1+state2)*0.5;   //-> 1.5
-    long double threshold3=(state2+state2)*0.5;   //-> 2
+    // BUGFIX (2026-09-07): this used to classify a neighbor pair's type by
+    // comparing the numeric mean of the two cell values against three
+    // thresholds derived from state1/state2 themselves -- entirely correct
+    // for the single-layer default (state1=1 < state2=2, giving thresholds
+    // 1 < 1.5 < 2 in the right order) but silently WRONG whenever a caller
+    // passes state1 > state2, which generate_landscape_layers_cpp does for
+    // every Fig.8/9 layer (background=empty_postfire=5 as state1, pattern=
+    // native=1 or invader=2 as state2): the thresholds come out reversed
+    // (e.g. 5, 3, 1), so background-background pairs got counted as
+    // pattern-pattern and vice versa, and the mixed-pair bucket became
+    // mathematically unreachable (threshold1 < mean < threshold3 has no
+    // solution when threshold1 > threshold3). This corrupted the SA-style
+    // growth loop's entire read of its own current clustering state, for
+    // every p, in both this initial estimate and the two move-evaluation
+    // blocks below -- confirmed via a debug build (see project memory) to
+    // swap est11/est22 wholesale and pin est12 at exactly 0. Replaced
+    // throughout with direct state-equality comparisons, which need no
+    // assumption about the relative order of state1 and state2.
     
     long double D;
     long double exp11,exp12,exp22;
@@ -624,10 +639,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             vj=j;
             if(vi>=0 && vi<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
-               mean=(S[vi][vj]+S[i][j])*0.5;
-               if(mean<threshold2){est11++;}
-               if(mean>threshold1 && mean<threshold3){est12++;}
-               if(mean>threshold2){est22++;}
+               if (S[vi][vj]==state1 && S[i][j]==state1) { est11++; }
+               else if (S[vi][vj]==state2 && S[i][j]==state2) { est22++; }
+               else { est12++; }
                num_tuples++;
             }
 
@@ -636,10 +650,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             vj=j;
             if(vi>=0 && vi<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
-               mean=(S[vi][vj]+S[i][j])*0.5;
-               if(mean<threshold2){est11++;}
-               if(mean>threshold1 && mean<threshold3){est12++;}
-               if(mean>threshold2){est22++;}
+               if (S[vi][vj]==state1 && S[i][j]==state1) { est11++; }
+               else if (S[vi][vj]==state2 && S[i][j]==state2) { est22++; }
+               else { est12++; }
                num_tuples++;
             }
 
@@ -648,10 +661,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             vj=j+1;
             if(vj>=0 && vj<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
-               mean=(S[vi][vj]+S[i][j])*0.5;
-               if(mean<threshold2){est11++;}
-               if(mean>threshold1 && mean<threshold3){est12++;}
-               if(mean>threshold2){est22++;}
+               if (S[vi][vj]==state1 && S[i][j]==state1) { est11++; }
+               else if (S[vi][vj]==state2 && S[i][j]==state2) { est22++; }
+               else { est12++; }
                num_tuples++;
             }
 
@@ -660,10 +672,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             vj=j-1;
             if(vj>=0 && vj<L && center_in && (S[vi][vj]==state1 || S[vi][vj]==state2))
             {
-               mean=(S[vi][vj]+S[i][j])*0.5;
-               if(mean<threshold2){est11++;}
-               if(mean>threshold1 && mean<threshold3){est12++;}
-               if(mean>threshold2){est22++;}
+               if (S[vi][vj]==state1 && S[i][j]==state1) { est11++; }
+               else if (S[vi][vj]==state2 && S[i][j]==state2) { est22++; }
+               else { est12++; }
                num_tuples++;
             }
 
@@ -915,64 +926,40 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
            zj=vj;
            if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p1--;}
-             if(mean_pos<threshold2){est11p1++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p1--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p1++;}
-             if(mean_ant>threshold2){est22p1--;}
-             if(mean_pos>threshold2){est22p1++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p1--; } else { est12p1--; }
+              if (neigh==state2) { est22p1++; } else { est12p1++; }
            }  
            
            zi=vi-1;
            zj=vj;
            if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p1--;}
-             if(mean_pos<threshold2){est11p1++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p1--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p1++;}
-             if(mean_ant>threshold2){est22p1--;}
-             if(mean_pos>threshold2){est22p1++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p1--; } else { est12p1--; }
+              if (neigh==state2) { est22p1++; } else { est12p1++; }
            }  
  
            zi=vi;
            zj=vj+1;
            if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p1--;}
-             if(mean_pos<threshold2){est11p1++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p1--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p1++;}
-             if(mean_ant>threshold2){est22p1--;}
-             if(mean_pos>threshold2){est22p1++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p1--; } else { est12p1--; }
+              if (neigh==state2) { est22p1++; } else { est12p1++; }
            }  
                      
            zi=vi;
            zj=vj-1;
            if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p1--;}
-             if(mean_pos<threshold2){est11p1++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p1--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p1++;}
-             if(mean_ant>threshold2){est22p1--;}
-             if(mean_pos>threshold2){est22p1++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p1--; } else { est12p1--; }
+              if (neigh==state2) { est22p1++; } else { est12p1++; }
            }                      
            dest11p1=est11p1/num_tuples;
            dest12p1=est12p1/num_tuples;
@@ -993,64 +980,40 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
            zj=vj;
            if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p2--;}
-             if(mean_pos<threshold2){est11p2++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p2--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p2++;}
-             if(mean_ant>threshold2){est22p2--;}
-             if(mean_pos>threshold2){est22p2++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p2--; } else { est12p2--; }
+              if (neigh==state2) { est22p2++; } else { est12p2++; }
            }  
            
            zi=vi-1;
            zj=vj;
            if(zi>=0 && zi<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p2--;}
-             if(mean_pos<threshold2){est11p2++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p2--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p2++;}
-             if(mean_ant>threshold2){est22p2--;}
-             if(mean_pos>threshold2){est22p2++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p2--; } else { est12p2--; }
+              if (neigh==state2) { est22p2++; } else { est12p2++; }
            }  
  
            zi=vi;
            zj=vj+1;
            if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p2--;}
-             if(mean_pos<threshold2){est11p2++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p2--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p2++;}
-             if(mean_ant>threshold2){est22p2--;}
-             if(mean_pos>threshold2){est22p2++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p2--; } else { est12p2--; }
+              if (neigh==state2) { est22p2++; } else { est12p2++; }
            }  
                      
            zi=vi;
            zj=vj-1;
            if(zj>=0 && zj<L && (S[zi][zj]==state1 || S[zi][zj]==state2))
            {
-              mean_ant=(S[zi][zj]+state1)*0.5;
-              mean_pos=(S[zi][zj]+state2)*0.5;
-                            
-             //Variacion de las probabilidades ante el nuevo cambio de S[i][j]
-             if(mean_ant<threshold2){est11p2--;}
-             if(mean_pos<threshold2){est11p2++;}
-             if(mean_ant>threshold1 && mean_ant<threshold3){est12p2--;}
-             if(mean_pos>threshold1 && mean_pos<threshold3){est12p2++;}
-             if(mean_ant>threshold2){est22p2--;}
-             if(mean_pos>threshold2){est22p2++;}
+              int neigh = S[zi][zj];
+              // before: candidate cell is state1; after: it becomes state2.
+              if (neigh==state1) { est11p2--; } else { est12p2--; }
+              if (neigh==state2) { est22p2++; } else { est12p2++; }
            }                      
            dest11p2=est11p2/num_tuples;
            dest12p2=est12p2/num_tuples;
