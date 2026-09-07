@@ -18,6 +18,7 @@ License: GPL-3
 Encoding: UTF-8
 Imports: Rcpp
 LinkingTo: Rcpp
+Suggests: av, gifski
 Roxygen: list(markdown = TRUE)
 NeedsCompilation: yes
 Config/roxygen2/version: 8.1.0
