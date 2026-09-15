@@ -2,18 +2,20 @@ Package: ForestFireR
 Type: Package
 Title: Spatial and Mean-Field Forest-Fire Invasion Model
 Version: 0.4.01
-Author: Rebeca de la Fuente, Leonardo A. Saravia
+Author: Leonardo A. Saravia, Rebeca de la Fuente
 Maintainer: Leonardo A. Saravia <lasaravia@untdf.edu.ar>
-Description: R/Rcpp interface to the spatial stochastic (Gillespie) and
-    deterministic mean-field forest-fire invasion model described in
-    "Dynamics of invasion in forest-fire models". Provides R-friendly
-    functions, using the paper's own notation (xi, eta, p), to generate
-    initial landscapes, run spatially-explicit and well-mixed simulations
-    with full trajectory/snapshot recording, and reproduce the paper's
-    figures. Based on the original forest_fire_model.cpp engine, with
-    missing grid-index-mapping functions restored, dynamic grid sizing,
-    reproducible RNG seeding, and a numerically stable mean-field
-    integrator added.
+Description: R/Rcpp interface to a spatial stochastic (Gillespie) and
+    deterministic mean-field model of fire-driven biological invasion in a
+    two-species, fire-vegetation system. Provides R-friendly functions,
+    using a compact dimensionless notation (xi, eta, p) for fire spread,
+    post-fire regrowth and spatial heterogeneity, to generate initial
+    landscapes and run spatially-explicit or well-mixed simulations with
+    full trajectory/snapshot recording. Based on the original
+    forest_fire_model.cpp engine, with missing grid-index-mapping
+    functions restored, dynamic grid sizing, reproducible RNG seeding, and
+    a numerically stable mean-field integrator added. The model is
+    described in de la Fuente & Saravia, "Dynamics of invasion in
+    forest-fire models" -- see the README for citation details.
 License: GPL-3
 Encoding: UTF-8
 Imports: Rcpp

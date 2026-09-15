@@ -13,7 +13,8 @@ generate_landscape(L = 100, density2 = 0.1, p = 1, seed = NULL)
 
 \item{p}{Spatial heterogeneity parameter, in \verb{[0, 2]} (0 = random,
 1 = neutral/no preference in the pairwise statistic, 2 = maximally
-segregated/clustered -- see Appendix B).}
+segregated/clustered -- see the paper's supplementary material for
+the full derivation).}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 }
@@ -24,10 +25,10 @@ An \code{L}x\code{L} integer matrix: \code{1} = native vegetation, \code{2} = in
 Places the invader species on a grid of natives according to the
 initial invader density and the spatial heterogeneity parameter \code{p}
 (called \eqn{p} in the paper, \code{q22} internally), following the
-pair-correlation landscape-generation algorithm described in Appendix B.
-\code{p = 0} disperses the invader uniformly at random; \code{p = 1} aggregates it
-into a single compact cluster; intermediate values interpolate between
-the two.
+pair-correlation landscape-generation algorithm described in the
+paper's supplementary material. \code{p = 0} disperses the invader uniformly
+at random; \code{p = 1} aggregates it into a single compact cluster;
+intermediate values interpolate between the two.
 }
 \examples{
 \dontrun{

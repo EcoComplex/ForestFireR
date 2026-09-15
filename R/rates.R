@@ -61,8 +61,8 @@ default_rates <- function() {
     L_30 = 1e6,      # fire -> empty_F, i.e. lambda^{F\\emptyset} (fire persistence)
     Lig_13 = 0,      # native  spontaneous ignition (paper: 0, native is not fire-adapted)
     Lig_23 = 1e-4,   # invader spontaneous ignition, lambda^{ig}
-    xi_nat = 0.5,    # native  fire-spread probability (Fig. 2 value; paper sweeps this in [~0.1, 0.9])
-    xi_inv = 0.6,    # invader fire-spread probability (fixed across the paper's main results)
-    eta_inv = 0.6    # invader post-fire regrowth probability (Fig. 2 value; paper sweeps this in [~0.1, 0.9])
+    xi_nat = 0.5,    # native  fire-spread probability (the spread/no-spread threshold -- see xi2lambda())
+    xi_inv = 0.6,    # invader fire-spread probability (moderately above the 0.5 threshold)
+    eta_inv = 0.6    # invader post-fire regrowth probability (a moderate regrowth advantage)
   )
 }

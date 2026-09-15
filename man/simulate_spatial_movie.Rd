@@ -46,14 +46,15 @@ of a couple of minutes in a typical environment).}
 \item{p}{Spatial heterogeneity of the initial landscape (see
 \code{\link[=generate_landscape]{generate_landscape()}}).}
 
-\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Table 1 fixes \code{xi_inv = 0.6} throughout the main
-results and sweeps \code{xi_nat} roughly across \verb{[0.1, 0.9]}; \code{xi_nat = 0.5}
-(the default here) is the value used in the paper's Fig. 2.}
+\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader, in
+\verb{[0, 1)} (see \code{\link[=xi2lambda]{xi2lambda()}}). \code{xi = 0.5} is the spread/no-spread
+threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults here
+(\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
+threshold and the invader moderately above it.}
 
 \item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} (paper's Fig. 2 value), also swept
-roughly across \verb{[0.1, 0.9]} for other figures.}
+\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
+regrowth advantage for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
@@ -148,8 +149,7 @@ fire), never more. The practical takeaway: if you see very few distinct
 frames (or a \code{verbose} log with very few calls before reaching \code{T}),
 that's the model genuinely not doing much in \verb{[0, T]} at these rates, not
 a bug -- pick a larger \code{T} (see \code{\link[=default_rates]{default_rates()}}'s documentation and
-the paper's own figures for typical horizons) rather than a smaller
-\code{n_frames}.
+the paper for typical horizons) rather than a smaller \code{n_frames}.
 
 Each engine call gets its own derived seed (\verb{seed + <call index>}, when
 \code{seed} is supplied) rather than reusing one seed repeatedly, which would
@@ -177,8 +177,9 @@ simulate_spatial_movie(T = 150, L = 60, n_frames = 80,
                         file = "invasion.gif", seed = 1)
 
 # Fire spread, seeded directly (default L_30/Lig_23 make fire resolve
-# in ~1e-4 years -- invisible to any video; see fig10/fig11's own
-# reduced-dynamics recipe, and this function's Details). L_30 = 5500
+# in ~1e-4 years -- invisible to any video; see the fire-spread-only
+# reduced-dynamics recipe in simulate_spatial_from_grid()'s docs, and
+# this function's Details). L_30 = 5500
 # here is grounded in real fire-residence-time estimates for a 30x30 m
 # cell (this package's own cell size), not a fitted package value --
 # two independent estimates converge on it: (1) understory fire

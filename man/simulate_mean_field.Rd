@@ -31,14 +31,15 @@ simulate_mean_field(
 fire, empty-after-vegetation-death and empty-after-fire respectively
 (should sum to 1).}
 
-\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Table 1 fixes \code{xi_inv = 0.6} throughout the main
-results and sweeps \code{xi_nat} roughly across \verb{[0.1, 0.9]}; \code{xi_nat = 0.5}
-(the default here) is the value used in the paper's Fig. 2.}
+\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader, in
+\verb{[0, 1)} (see \code{\link[=xi2lambda]{xi2lambda()}}). \code{xi = 0.5} is the spread/no-spread
+threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults here
+(\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
+threshold and the invader moderately above it.}
 
 \item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} (paper's Fig. 2 value), also swept
-roughly across \verb{[0.1, 0.9]} for other figures.}
+\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
+regrowth advantage for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
@@ -51,8 +52,9 @@ explore parameter space, e.g. \code{L_21 = 0.02}.}
 A data frame with columns \code{time}, \code{n0}..\code{n5}.
 }
 \description{
-Integrates the mean-field ODE system (paper Eq. 12) describing the
-well-mixed limit of the model, and returns the full trajectory as a
+Integrates the mean-field ODE system describing the well-mixed limit of
+the model (see the paper's mean-field derivation for the full
+equations), and returns the full trajectory as a
 data frame. Internally uses a semi-implicit (IMEX) step for the fire
 compartment so that it stays numerically stable even under the paper's
 default \code{L_30 = 1e6} (an explicit fixed-step RK4 on this term alone

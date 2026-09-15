@@ -23,16 +23,17 @@ set_seed <- function(seed) {
 #' Places the invader species on a grid of natives according to the
 #' initial invader density and the spatial heterogeneity parameter `p`
 #' (called \eqn{p} in the paper, `q22` internally), following the
-#' pair-correlation landscape-generation algorithm described in Appendix B.
-#' `p = 0` disperses the invader uniformly at random; `p = 1` aggregates it
-#' into a single compact cluster; intermediate values interpolate between
-#' the two.
+#' pair-correlation landscape-generation algorithm described in the
+#' paper's supplementary material. `p = 0` disperses the invader uniformly
+#' at random; `p = 1` aggregates it into a single compact cluster;
+#' intermediate values interpolate between the two.
 #'
 #' @param L Grid side length (grid has `L*L` sites).
 #' @param density2 Initial invader density, in `(0, 1)`.
 #' @param p Spatial heterogeneity parameter, in `[0, 2]` (0 = random,
 #'   1 = neutral/no preference in the pairwise statistic, 2 = maximally
-#'   segregated/clustered -- see Appendix B).
+#'   segregated/clustered -- see the paper's supplementary material for
+#'   the full derivation).
 #' @param seed Integer RNG seed, or `NULL` for a fresh, non-reproducible seed.
 #' @return An `L`x`L` integer matrix: `1` = native vegetation, `2` = invader.
 #' @examples
@@ -50,8 +51,8 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #' Runs the model's Gillespie stochastic simulation algorithm on an `L`x`L`
 #' periodic (or bounded) grid, starting from an invader landscape generated
 #' the same way as [generate_landscape()]. This is the direct R-friendly
-#' interface to the paper's spatial model (Section 2, Eq. \[the CTMC /
-#' master equation\]).
+#' interface to the model's continuous-time Markov chain (master equation)
+#' spatial dynamics, as described in the paper.
 #'
 #' @param T Simulation time horizon (years).
 #' @param L Grid side length (grid has `L*L` sites). Runtime scales roughly
@@ -62,13 +63,14 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #' @param density2 Initial invader density.
 #' @param p Spatial heterogeneity of the initial landscape (see
 #'   [generate_landscape()]).
-#' @param xi_nat,xi_inv Fire-spread probabilities for native/invader
-#'   (see [xi2lambda()]). Table 1 fixes `xi_inv = 0.6` throughout the main
-#'   results and sweeps `xi_nat` roughly across `[0.1, 0.9]`; `xi_nat = 0.5`
-#'   (the default here) is the value used in the paper's Fig. 2.
+#' @param xi_nat,xi_inv Fire-spread probabilities for native/invader, in
+#'   `[0, 1)` (see [xi2lambda()]). `xi = 0.5` is the spread/no-spread
+#'   threshold (see [xi2lambda()]'s Details); the defaults here
+#'   (`xi_nat = 0.5`, `xi_inv = 0.6`) put the native species right at that
+#'   threshold and the invader moderately above it.
 #' @param eta_inv Invader post-fire regrowth probability (see
-#'   [xi2lambda()]); default `0.6` (paper's Fig. 2 value), also swept
-#'   roughly across `[0.1, 0.9]` for other figures.
+#'   [xi2lambda()]); default `0.6` represents a moderate post-fire
+#'   regrowth advantage for the invader.
 #' @param L_01,L_02,L_12,L_21,L_30,Lig_13,Lig_23 Base rate constants; see
 #'   [default_rates()] for Table 1 defaults. Override individual entries to
 #'   explore parameter space, e.g. `L_21 = 0.02`.
@@ -78,17 +80,18 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #'   `T`. `-1` (default) records only the final state (fastest, use this
 #'   for parameter sweeps). `0` records every single event (dense, memory
 #'   heavy, only for small/short runs). A positive value samples the
-#'   trajectory roughly every `record_dt` time units (use this to reproduce
-#'   trajectory figures, e.g. `record_dt = T/200`).
+#'   trajectory roughly every `record_dt` time units (use this whenever you
+#'   need the full time series rather than just the endpoint, e.g.
+#'   `record_dt = T/200` for a smooth-looking curve).
 #' @param record_grid If `TRUE`, also return the initial and final grid
-#'   snapshots (`L`x`L` integer matrices) -- needed for the spatial-pattern
-#'   figures.
+#'   snapshots (`L`x`L` integer matrices) -- use this whenever you need to
+#'   inspect or plot the spatial pattern, not just the aggregate densities.
 #' @param capture_fire_snapshots If `TRUE`, also return every grid snapshot
 #'   captured while the fire compartment was actively non-empty (`n3 > 0`),
 #'   throttled to at most one capture per `fire_snapshot_min_gap` time
 #'   units. Use this to find an illustrative "fire in progress" grid near a
-#'   target time (e.g. Fig. 2's panels at `t=76`, `t=120`): `record_grid`'s
-#'   start/end snapshots essentially never show fire, because Table 1's
+#'   target illustration time: `record_grid`'s start/end snapshots
+#'   essentially never show fire, because the default
 #'   fire-spread/fire-extinction rates (~1e6/year, hours-scale) resolve any
 #'   given outbreak in a sliver of simulated time invisible to a snapshot
 #'   at an arbitrary fixed time -- an outbreak has to be searched for
@@ -96,9 +99,9 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #'   `fire_snapshot_times` entry closest to your target time and use the
 #'   matching `fire_snapshot_grids` entry; there is no guarantee one exists
 #'   near any particular time (ignition is itself a rare Poisson process --
-#'   `lambda^ig = 1e-4`/year per invader-occupied site, Table 1), so check
-#'   `length(fire_snapshot_times)` and how close the nearest one actually
-#'   is before trusting it as illustrative of that moment.
+#'   `lambda^ig = 1e-4`/year per invader-occupied site by default), so
+#'   check `length(fire_snapshot_times)` and how close the nearest one
+#'   actually is before trusting it as illustrative of that moment.
 #' @param fire_snapshot_min_gap Minimum simulated-time gap (years) between
 #'   two fire snapshots; keeps a single outbreak from filling the returned
 #'   list with near-duplicate frames. Default `0.001` (~9 hours) is well
@@ -146,8 +149,9 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
 
 #' Simulate the deterministic mean-field model
 #'
-#' Integrates the mean-field ODE system (paper Eq. 12) describing the
-#' well-mixed limit of the model, and returns the full trajectory as a
+#' Integrates the mean-field ODE system describing the well-mixed limit of
+#' the model (see the paper's mean-field derivation for the full
+#' equations), and returns the full trajectory as a
 #' data frame. Internally uses a semi-implicit (IMEX) step for the fire
 #' compartment so that it stays numerically stable even under the paper's
 #' default `L_30 = 1e6` (an explicit fixed-step RK4 on this term alone
@@ -197,8 +201,7 @@ simulate_mean_field <- function(T, n1_0 = 0.9, n2_0 = 0.05, n3_0 = 0, n4_0 = 0.0
 #' Runs the well-mixed Gillespie simulation (mass-action, no spatial
 #' structure) at a given population size `N`, the stochastic counterpart
 #' to [simulate_mean_field()]. Useful for isolating the effect of spatial
-#' structure from the effect of demographic stochasticity (paper Section
-#' 3.3/3.4).
+#' structure from the effect of demographic stochasticity.
 #'
 #' @param T Simulation time horizon.
 #' @param N Well-mixed population size (analogous to `L*L` in the spatial
@@ -264,11 +267,14 @@ FF_STATE <- c(native = 1L, invader = 2L, fire = 3L, empty = 4L, empty_postfire =
 #' hanging -- check the printed cell counts against what you asked for if
 #' you see this.
 #'
-#' Used to build the initial conditions for Figs. 8-9 (5% native + 5%
-#' invader, placed independently, over an all-`empty_postfire` domain) and
-#' Figs. 10-11 (1% fire placed over an all-`invader` domain) -- see
-#' `Source/R_reproduce_figures/` in the manuscript repository for the full
-#' reproduction scripts.
+#' Two scenarios this is built for: (1) two vegetation species placed
+#' independently over a shared background (e.g. a small amount of native
+#' and invader vegetation scattered or clustered over an otherwise empty,
+#' post-fire domain), and (2) a small pattern placed over an
+#' already-uniform domain (e.g. a few active-fire cells ignited directly
+#' over an all-invader domain), for studying post-fire regrowth or fire
+#' spread in relative isolation from the rest of the dynamics -- see the
+#' examples below.
 #'
 #' @param L Grid side length.
 #' @param fill_state The state ([FF_STATE]) the whole grid starts as,
@@ -280,7 +286,7 @@ FF_STATE <- c(native = 1L, invader = 2L, fire = 3L, empty = 4L, empty_postfire =
 #' @return An `L`x`L` integer matrix using [FF_STATE]'s codes.
 #' @examples
 #' \dontrun{
-#' # 5% native + 5% invader over a post-fire-empty domain (Figs. 8-9)
+#' # two species placed independently over a post-fire-empty domain
 #' g <- generate_landscape_layers(L = 100, fill_state = FF_STATE["empty_postfire"],
 #'   layers = list(
 #'     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
@@ -289,7 +295,7 @@ FF_STATE <- c(native = 1L, invader = 2L, fire = 3L, empty = 4L, empty_postfire =
 #'          density = 0.05, p = 0.8)
 #'   ), seed = 1)
 #'
-#' # 1% fire over an all-invader domain (Figs. 10-11)
+#' # a small ignition patch over an all-invader domain
 #' g2 <- generate_landscape_layers(L = 100, fill_state = FF_STATE["invader"],
 #'   layers = list(
 #'     list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],
@@ -315,15 +321,16 @@ generate_landscape_layers <- function(L = 100, fill_state, layers, seed = NULL) 
 #' Like [simulate_spatial()], but starts from an initial grid you supply
 #' (typically from [generate_landscape_layers()]) instead of building one
 #' internally from `density2`/`p`. Use this for any initial condition
-#' [generate_landscape()] can't express on its own -- e.g. Figs. 8-11,
-#' which also need some of the rate constants below zeroed out to match
-#' the reduced reaction sets those figures use (see
-#' `Source/R_reproduce_figures/` in the manuscript repository): Figs. 8-9
-#' disable fire entirely (`xi_nat = 0, xi_inv = 0, Lig_23 = 0`) and vegetation
-#' replacement (`L_12 = 0, L_21 = 0`), keeping only colonization/regrowth;
-#' Figs. 10-11 disable colonization/regrowth (`L_01 = 0, L_02 = 0, eta_inv = 0`)
-#' and native-side reactions (irrelevant since there's no native vegetation
-#' in that initial condition), keeping only fire spread/burnout.
+#' [generate_landscape()] can't express on its own, typically alongside
+#' some of the rate constants zeroed out to isolate a subset of the
+#' dynamics. Two useful recipes: to study post-fire regrowth/colonization
+#' in isolation, disable fire entirely (`xi_nat = 0, xi_inv = 0,
+#' Lig_23 = 0`) and vegetation replacement (`L_12 = 0, L_21 = 0`); to
+#' study fire spread in isolation (e.g. starting from a small ignition
+#' patch over an all-invader domain), disable colonization/regrowth
+#' (`L_01 = 0, L_02 = 0, eta_inv = 0`) and native-side reactions
+#' (irrelevant when there's no native vegetation in the initial
+#' condition), keeping only fire spread/burnout.
 #'
 #' @param T Simulation time horizon.
 #' @param initial_grid An `L`x`L` integer matrix using [FF_STATE]'s codes
@@ -332,8 +339,9 @@ generate_landscape_layers <- function(L = 100, fill_state, layers, seed = NULL) 
 #'   native species as extinct and end the run as soon as its density
 #'   drops below `0.0001` -- assumes `initial_grid` actually contains
 #'   native vegetation to begin with. Set `FALSE` for an `initial_grid`
-#'   that has none by design (e.g. Figs. 10-11's fire-over-invader
-#'   domain), or that early stop triggers on the very first step. Leave at
+#'   that has none by design (e.g. a fire-over-invader domain with no
+#'   native vegetation), or that early stop triggers on the very first
+#'   step. Leave at
 #'   the default `TRUE` whenever native vegetation is present (matches
 #'   [simulate_spatial()], which always uses the check).
 #' @inheritParams simulate_spatial

@@ -16,9 +16,12 @@ Gillespie simulation, \code{\link[=simulate_mean_field]{simulate_mean_field()}} 
 well-mixed limit, and \code{\link[=simulate_mean_field_stochastic]{simulate_mean_field_stochastic()}} for its
 stochastic (well-mixed, no spatial structure) counterpart.
 \code{\link[=default_rates]{default_rates()}} and \code{\link[=xi2lambda]{xi2lambda()}} help set up rate parameters using
-the paper's own notation (Table 1, and the \eqn{\xi}/\eqn{\eta}
-dimensionless spread/regrowth probabilities).
+a compact dimensionless notation (baseline values, and the
+\eqn{\xi}/\eqn{\eta} dimensionless spread/regrowth probabilities).
 
 See the \verb{examples/} directory shipped with the package source for
-scripts that reproduce the paper's main figures.
+worked scripts illustrating the model's main behaviors (an invasion
+trajectory, a landscape-heterogeneity sweep, a fire-spread/regrowth
+phase diagram). If you use this package, please cite the paper it
+implements -- see the README's Citation section.
 }

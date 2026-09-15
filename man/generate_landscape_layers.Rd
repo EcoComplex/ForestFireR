@@ -38,15 +38,18 @@ hanging -- check the printed cell counts against what you asked for if
 you see this.
 }
 \details{
-Used to build the initial conditions for Figs. 8-9 (5\% native + 5\%
-invader, placed independently, over an all-\code{empty_postfire} domain) and
-Figs. 10-11 (1\% fire placed over an all-\code{invader} domain) -- see
-\verb{Source/R_reproduce_figures/} in the manuscript repository for the full
-reproduction scripts.
+Two scenarios this is built for: (1) two vegetation species placed
+independently over a shared background (e.g. a small amount of native
+and invader vegetation scattered or clustered over an otherwise empty,
+post-fire domain), and (2) a small pattern placed over an
+already-uniform domain (e.g. a few active-fire cells ignited directly
+over an all-invader domain), for studying post-fire regrowth or fire
+spread in relative isolation from the rest of the dynamics -- see the
+examples below.
 }
 \examples{
 \dontrun{
-# 5\% native + 5\% invader over a post-fire-empty domain (Figs. 8-9)
+# two species placed independently over a post-fire-empty domain
 g <- generate_landscape_layers(L = 100, fill_state = FF_STATE["empty_postfire"],
   layers = list(
     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
@@ -55,7 +58,7 @@ g <- generate_landscape_layers(L = 100, fill_state = FF_STATE["empty_postfire"],
          density = 0.05, p = 0.8)
   ), seed = 1)
 
-# 1\% fire over an all-invader domain (Figs. 10-11)
+# a small ignition patch over an all-invader domain
 g2 <- generate_landscape_layers(L = 100, fill_state = FF_STATE["invader"],
   layers = list(
     list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],

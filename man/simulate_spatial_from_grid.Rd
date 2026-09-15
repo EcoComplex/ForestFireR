@@ -32,14 +32,15 @@ simulate_spatial_from_grid(
 \item{initial_grid}{An \code{L}x\code{L} integer matrix using \link{FF_STATE}'s codes
 (e.g. from \code{\link[=generate_landscape_layers]{generate_landscape_layers()}}).}
 
-\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Table 1 fixes \code{xi_inv = 0.6} throughout the main
-results and sweeps \code{xi_nat} roughly across \verb{[0.1, 0.9]}; \code{xi_nat = 0.5}
-(the default here) is the value used in the paper's Fig. 2.}
+\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader, in
+\verb{[0, 1)} (see \code{\link[=xi2lambda]{xi2lambda()}}). \code{xi = 0.5} is the spread/no-spread
+threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults here
+(\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
+threshold and the invader moderately above it.}
 
 \item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} (paper's Fig. 2 value), also swept
-roughly across \verb{[0.1, 0.9]} for other figures.}
+\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
+regrowth advantage for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
@@ -53,19 +54,21 @@ explore parameter space, e.g. \code{L_21 = 0.02}.}
 \code{T}. \code{-1} (default) records only the final state (fastest, use this
 for parameter sweeps). \code{0} records every single event (dense, memory
 heavy, only for small/short runs). A positive value samples the
-trajectory roughly every \code{record_dt} time units (use this to reproduce
-trajectory figures, e.g. \code{record_dt = T/200}).}
+trajectory roughly every \code{record_dt} time units (use this whenever you
+need the full time series rather than just the endpoint, e.g.
+\code{record_dt = T/200} for a smooth-looking curve).}
 
 \item{record_grid}{If \code{TRUE}, also return the initial and final grid
-snapshots (\code{L}x\code{L} integer matrices) -- needed for the spatial-pattern
-figures.}
+snapshots (\code{L}x\code{L} integer matrices) -- use this whenever you need to
+inspect or plot the spatial pattern, not just the aggregate densities.}
 
 \item{check_extinction}{The engine's usual early stop -- treat the
 native species as extinct and end the run as soon as its density
 drops below \code{0.0001} -- assumes \code{initial_grid} actually contains
 native vegetation to begin with. Set \code{FALSE} for an \code{initial_grid}
-that has none by design (e.g. Figs. 10-11's fire-over-invader
-domain), or that early stop triggers on the very first step. Leave at
+that has none by design (e.g. a fire-over-invader domain with no
+native vegetation), or that early stop triggers on the very first
+step. Leave at
 the default \code{TRUE} whenever native vegetation is present (matches
 \code{\link[=simulate_spatial]{simulate_spatial()}}, which always uses the check).}
 
@@ -73,8 +76,8 @@ the default \code{TRUE} whenever native vegetation is present (matches
 captured while the fire compartment was actively non-empty (\code{n3 > 0}),
 throttled to at most one capture per \code{fire_snapshot_min_gap} time
 units. Use this to find an illustrative "fire in progress" grid near a
-target time (e.g. Fig. 2's panels at \code{t=76}, \code{t=120}): \code{record_grid}'s
-start/end snapshots essentially never show fire, because Table 1's
+target illustration time: \code{record_grid}'s start/end snapshots
+essentially never show fire, because the default
 fire-spread/fire-extinction rates (~1e6/year, hours-scale) resolve any
 given outbreak in a sliver of simulated time invisible to a snapshot
 at an arbitrary fixed time -- an outbreak has to be searched for
@@ -82,9 +85,9 @@ explicitly, not hoped for. After the run, pick the returned
 \code{fire_snapshot_times} entry closest to your target time and use the
 matching \code{fire_snapshot_grids} entry; there is no guarantee one exists
 near any particular time (ignition is itself a rare Poisson process --
-\code{lambda^ig = 1e-4}/year per invader-occupied site, Table 1), so check
-\code{length(fire_snapshot_times)} and how close the nearest one actually
-is before trusting it as illustrative of that moment.}
+\code{lambda^ig = 1e-4}/year per invader-occupied site by default), so
+check \code{length(fire_snapshot_times)} and how close the nearest one
+actually is before trusting it as illustrative of that moment.}
 
 \item{fire_snapshot_min_gap}{Minimum simulated-time gap (years) between
 two fire snapshots; keeps a single outbreak from filling the returned
@@ -96,13 +99,13 @@ between individual Gillespie events during one.}
 Like \code{\link[=simulate_spatial]{simulate_spatial()}}, but starts from an initial grid you supply
 (typically from \code{\link[=generate_landscape_layers]{generate_landscape_layers()}}) instead of building one
 internally from \code{density2}/\code{p}. Use this for any initial condition
-\code{\link[=generate_landscape]{generate_landscape()}} can't express on its own -- e.g. Figs. 8-11,
-which also need some of the rate constants below zeroed out to match
-the reduced reaction sets those figures use (see
-\verb{Source/R_reproduce_figures/} in the manuscript repository): Figs. 8-9
-disable fire entirely (\verb{xi_nat = 0, xi_inv = 0, Lig_23 = 0}) and vegetation
-replacement (\verb{L_12 = 0, L_21 = 0}), keeping only colonization/regrowth;
-Figs. 10-11 disable colonization/regrowth (\verb{L_01 = 0, L_02 = 0, eta_inv = 0})
-and native-side reactions (irrelevant since there's no native vegetation
-in that initial condition), keeping only fire spread/burnout.
+\code{\link[=generate_landscape]{generate_landscape()}} can't express on its own, typically alongside
+some of the rate constants zeroed out to isolate a subset of the
+dynamics. Two useful recipes: to study post-fire regrowth/colonization
+in isolation, disable fire entirely (\verb{xi_nat = 0, xi_inv = 0, Lig_23 = 0}) and vegetation replacement (\verb{L_12 = 0, L_21 = 0}); to
+study fire spread in isolation (e.g. starting from a small ignition
+patch over an all-invader domain), disable colonization/regrowth
+(\verb{L_01 = 0, L_02 = 0, eta_inv = 0}) and native-side reactions
+(irrelevant when there's no native vegetation in the initial
+condition), keeping only fire spread/burnout.
 }

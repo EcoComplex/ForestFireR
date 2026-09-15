@@ -34,14 +34,15 @@ model, but with no spatial structure).}
 
 \item{n1_0, n2_0, n3_0, n4_0, n5_0}{Initial densities (should sum to 1).}
 
-\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Table 1 fixes \code{xi_inv = 0.6} throughout the main
-results and sweeps \code{xi_nat} roughly across \verb{[0.1, 0.9]}; \code{xi_nat = 0.5}
-(the default here) is the value used in the paper's Fig. 2.}
+\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader, in
+\verb{[0, 1)} (see \code{\link[=xi2lambda]{xi2lambda()}}). \code{xi = 0.5} is the spread/no-spread
+threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults here
+(\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
+threshold and the invader moderately above it.}
 
 \item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} (paper's Fig. 2 value), also swept
-roughly across \verb{[0.1, 0.9]} for other figures.}
+\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
+regrowth advantage for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
@@ -62,6 +63,5 @@ simply stops there.
 Runs the well-mixed Gillespie simulation (mass-action, no spatial
 structure) at a given population size \code{N}, the stochastic counterpart
 to \code{\link[=simulate_mean_field]{simulate_mean_field()}}. Useful for isolating the effect of spatial
-structure from the effect of demographic stochasticity (paper Section
-3.3/3.4).
+structure from the effect of demographic stochasticity.
 }

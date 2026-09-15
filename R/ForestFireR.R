@@ -9,11 +9,14 @@
 #' well-mixed limit, and [simulate_mean_field_stochastic()] for its
 #' stochastic (well-mixed, no spatial structure) counterpart.
 #' [default_rates()] and [xi2lambda()] help set up rate parameters using
-#' the paper's own notation (Table 1, and the \eqn{\xi}/\eqn{\eta}
-#' dimensionless spread/regrowth probabilities).
+#' a compact dimensionless notation (baseline values, and the
+#' \eqn{\xi}/\eqn{\eta} dimensionless spread/regrowth probabilities).
 #'
 #' See the `examples/` directory shipped with the package source for
-#' scripts that reproduce the paper's main figures.
+#' worked scripts illustrating the model's main behaviors (an invasion
+#' trajectory, a landscape-heterogeneity sweep, a fire-spread/regrowth
+#' phase diagram). If you use this package, please cite the paper it
+#' implements -- see the README's Citation section.
 #'
 #' @docType package
 #' @name ForestFireR

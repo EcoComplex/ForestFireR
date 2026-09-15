@@ -39,8 +39,7 @@
 #' frames (or a `verbose` log with very few calls before reaching `T`),
 #' that's the model genuinely not doing much in `[0, T]` at these rates, not
 #' a bug -- pick a larger `T` (see [default_rates()]'s documentation and
-#' the paper's own figures for typical horizons) rather than a smaller
-#' `n_frames`.
+#' the paper for typical horizons) rather than a smaller `n_frames`.
 #'
 #' Each engine call gets its own derived seed (`seed + <call index>`, when
 #' `seed` is supplied) rather than reusing one seed repeatedly, which would
@@ -104,8 +103,9 @@
 #'                         file = "invasion.gif", seed = 1)
 #'
 #' # Fire spread, seeded directly (default L_30/Lig_23 make fire resolve
-#' # in ~1e-4 years -- invisible to any video; see fig10/fig11's own
-#' # reduced-dynamics recipe, and this function's Details). L_30 = 5500
+#' # in ~1e-4 years -- invisible to any video; see the fire-spread-only
+#' # reduced-dynamics recipe in simulate_spatial_from_grid()'s docs, and
+#' # this function's Details). L_30 = 5500
 #' # here is grounded in real fire-residence-time estimates for a 30x30 m
 #' # cell (this package's own cell size), not a fitted package value --
 #' # two independent estimates converge on it: (1) understory fire

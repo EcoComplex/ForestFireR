@@ -41,14 +41,15 @@ of a couple of minutes in a typical environment).}
 \item{p}{Spatial heterogeneity of the initial landscape (see
 \code{\link[=generate_landscape]{generate_landscape()}}).}
 
-\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Table 1 fixes \code{xi_inv = 0.6} throughout the main
-results and sweeps \code{xi_nat} roughly across \verb{[0.1, 0.9]}; \code{xi_nat = 0.5}
-(the default here) is the value used in the paper's Fig. 2.}
+\item{xi_nat, xi_inv}{Fire-spread probabilities for native/invader, in
+\verb{[0, 1)} (see \code{\link[=xi2lambda]{xi2lambda()}}). \code{xi = 0.5} is the spread/no-spread
+threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults here
+(\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
+threshold and the invader moderately above it.}
 
 \item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} (paper's Fig. 2 value), also swept
-roughly across \verb{[0.1, 0.9]} for other figures.}
+\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
+regrowth advantage for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
@@ -62,19 +63,20 @@ explore parameter space, e.g. \code{L_21 = 0.02}.}
 \code{T}. \code{-1} (default) records only the final state (fastest, use this
 for parameter sweeps). \code{0} records every single event (dense, memory
 heavy, only for small/short runs). A positive value samples the
-trajectory roughly every \code{record_dt} time units (use this to reproduce
-trajectory figures, e.g. \code{record_dt = T/200}).}
+trajectory roughly every \code{record_dt} time units (use this whenever you
+need the full time series rather than just the endpoint, e.g.
+\code{record_dt = T/200} for a smooth-looking curve).}
 
 \item{record_grid}{If \code{TRUE}, also return the initial and final grid
-snapshots (\code{L}x\code{L} integer matrices) -- needed for the spatial-pattern
-figures.}
+snapshots (\code{L}x\code{L} integer matrices) -- use this whenever you need to
+inspect or plot the spatial pattern, not just the aggregate densities.}
 
 \item{capture_fire_snapshots}{If \code{TRUE}, also return every grid snapshot
 captured while the fire compartment was actively non-empty (\code{n3 > 0}),
 throttled to at most one capture per \code{fire_snapshot_min_gap} time
 units. Use this to find an illustrative "fire in progress" grid near a
-target time (e.g. Fig. 2's panels at \code{t=76}, \code{t=120}): \code{record_grid}'s
-start/end snapshots essentially never show fire, because Table 1's
+target illustration time: \code{record_grid}'s start/end snapshots
+essentially never show fire, because the default
 fire-spread/fire-extinction rates (~1e6/year, hours-scale) resolve any
 given outbreak in a sliver of simulated time invisible to a snapshot
 at an arbitrary fixed time -- an outbreak has to be searched for
@@ -82,9 +84,9 @@ explicitly, not hoped for. After the run, pick the returned
 \code{fire_snapshot_times} entry closest to your target time and use the
 matching \code{fire_snapshot_grids} entry; there is no guarantee one exists
 near any particular time (ignition is itself a rare Poisson process --
-\code{lambda^ig = 1e-4}/year per invader-occupied site, Table 1), so check
-\code{length(fire_snapshot_times)} and how close the nearest one actually
-is before trusting it as illustrative of that moment.}
+\code{lambda^ig = 1e-4}/year per invader-occupied site by default), so
+check \code{length(fire_snapshot_times)} and how close the nearest one
+actually is before trusting it as illustrative of that moment.}
 
 \item{fire_snapshot_min_gap}{Minimum simulated-time gap (years) between
 two fire snapshots; keeps a single outbreak from filling the returned
@@ -105,8 +107,8 @@ matrices, same length and order) if \code{capture_fire_snapshots = TRUE}.
 Runs the model's Gillespie stochastic simulation algorithm on an \code{L}x\code{L}
 periodic (or bounded) grid, starting from an invader landscape generated
 the same way as \code{\link[=generate_landscape]{generate_landscape()}}. This is the direct R-friendly
-interface to the paper's spatial model (Section 2, Eq. [the CTMC /
-master equation]).
+interface to the model's continuous-time Markov chain (master equation)
+spatial dynamics, as described in the paper.
 }
 \examples{
 \dontrun{
