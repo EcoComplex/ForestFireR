@@ -1,5 +1,54 @@
 # NEWS
 
+## ForestFireR 0.6.0
+
+### New features
+
+* Added `eta_nat`, the native counterpart to `eta_inv`: a dimensionless
+  post-fire regrowth probability for the native species, converted to the
+  `Lrg_01` rate constant the same way `eta_inv` converts to `Lrg_02` (see
+  `?xi2lambda`). The underlying C++ engine already supported `Lrg_01`
+  symmetrically across all three sub-engines (spatial, mean-field ODE,
+  well-mixed stochastic) -- only the R-level parameter was missing.
+  Default `eta_nat = 0` matches the paper's own parametrization exactly,
+  so this is backward compatible: no existing call changes behavior.
+* Added to all four simulate functions (`simulate_spatial()`,
+  `simulate_mean_field()`, `simulate_mean_field_stochastic()`,
+  `simulate_spatial_from_grid()`) and to `simulate_spatial_movie()`;
+  added `eta_nat = 0` to `default_rates()`'s returned list.
+* Updated roxygen docs for `xi2lambda()`/`eta2lambda()`, `default_rates()`,
+  `simulate_spatial()` (and the functions that `@inheritParams` from it),
+  and `FF_STATE` to describe both species' regrowth channels
+  symmetrically, and regenerated `man/*.Rd`.
+* Added `test-native-regrowth.R`: isolates each species' post-fire
+  regrowth channel in turn (fire, replacement and the other species'
+  `eta` all off) starting from an all-empty-postfire grid, and checks the
+  a priori known outcome -- only the species whose `eta` is nonzero can
+  ever appear. Also confirmed `eta_nat = eta_inv = 0` leaves the grid
+  untouched. Extended `test-xi2lambda.R`'s `default_rates()` check to
+  cover `xi_nat`, `xi_inv`, `eta_nat`, `eta_inv`.
+* Note for anyone isolating regrowth dynamics like the new test does:
+  `eta2lambda()`/`xi2lambda()` convert both `eta_nat` and `eta_inv` using
+  `L_01` (not `L_02`) as the reference rate (see `?xi2lambda`'s Details),
+  so `L_01 = 0` zeroes `Lrg_01` too, not just ordinary native
+  colonization -- keep `L_01` nonzero when you want either regrowth
+  channel active.
+
+### Documentation site
+
+* Added a `pkgdown` site (`_pkgdown.yml`) instead of a vignette, per
+  <https://r-pkgs.org/vignettes.html>'s recommendation. Verified it builds
+  cleanly (`pkgdown::build_site()`, all 12 reference pages, no errors)
+  before committing. Deployment is automated via
+  `.github/workflows/pkgdown.yaml` (the standard `r-lib/actions` template):
+  every push to `main` rebuilds the site and publishes it to the
+  `gh-pages` branch -- the site itself is not committed to `main` (see
+  `.gitignore`). One manual step remains: in the GitHub repo's Settings ->
+  Pages, set the source to the `gh-pages` branch (it's created
+  automatically the first time the workflow runs after this is pushed).
+  Once enabled, the site is served at
+  <https://EcoComplex.github.io/ForestFireR/>.
+
 ## ForestFireR 0.5.0
 
 ### Testing

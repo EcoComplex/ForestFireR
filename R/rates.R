@@ -21,11 +21,13 @@
 #'   catches fire from a burning neighbour), `xi2lambda(xi_inv, L_30)` gives
 #'   `Lsp_23` (invader catches fire from a burning neighbour).
 #'
-#'   Regrowth: only the invader's post-fire regrowth advantage `eta_inv` is
-#'   defined in the paper (this is intentional -- see the manuscript's
-#'   discussion of why an analogous `eta_nat` is not defined). It converts
-#'   to `Lrg_02` using `L_01` (not `L_02`) as the reference rate:
-#'   `eta2lambda(eta_inv, L_01)` gives `Lrg_02`.
+#'   Regrowth: both species' post-fire regrowth probabilities convert the
+#'   same way, using `L_01` (not `L_02`) as the reference rate for both:
+#'   `eta2lambda(eta_nat, L_01)` gives `Lrg_01` (native long-range
+#'   regrowth), `eta2lambda(eta_inv, L_01)` gives `Lrg_02` (invader
+#'   long-range regrowth). The paper's own parametrization sets
+#'   `eta_nat = 0` (native has no post-fire regrowth advantage); `eta_nat`
+#'   exists so the model can be used symmetrically for other systems.
 #' @export
 xi2lambda <- function(xi, lambda_ref) {
   if (any(xi < 0 | xi >= 1)) stop("xi/eta must be in [0, 1)")
@@ -47,8 +49,9 @@ eta2lambda <- function(xi, lambda_ref) xi2lambda(xi, lambda_ref)
 #' @return A named list with the vegetation turnover rates
 #'   (`L_01`, `L_02`, `L_12`, `L_21`), the fire persistence rate (`L_30`,
 #'   i.e. \eqn{\lambda^{F\emptyset}}), the invader's spontaneous ignition
-#'   rate (`Lig_23`), and default dimensionless `xi_nat`, `xi_inv`,
-#'   `eta_inv` (see [xi2lambda()]).
+#'   rate (`Lig_23`), the native's spontaneous ignition rate (`Lig_13`),
+#'   and default dimensionless `xi_nat`, `xi_inv`, `eta_nat`, `eta_inv`
+#'   (see [xi2lambda()]).
 #' @export
 default_rates <- function() {
   list(
@@ -63,6 +66,7 @@ default_rates <- function() {
     Lig_23 = 1e-4,   # invader spontaneous ignition, lambda^{ig}
     xi_nat = 0.5,    # native  fire-spread probability (the spread/no-spread threshold -- see xi2lambda())
     xi_inv = 0.6,    # invader fire-spread probability (moderately above the 0.5 threshold)
+    eta_nat = 0,     # native  post-fire regrowth probability (paper: 0, no native regrowth advantage)
     eta_inv = 0.6    # invader post-fire regrowth probability (a moderate regrowth advantage)
   )
 }

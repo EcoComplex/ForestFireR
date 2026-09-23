@@ -36,9 +36,11 @@ Fire spread: \code{xi2lambda(xi_nat, L_30)} gives \code{Lsp_13} (native
 catches fire from a burning neighbour), \code{xi2lambda(xi_inv, L_30)} gives
 \code{Lsp_23} (invader catches fire from a burning neighbour).
 
-Regrowth: only the invader's post-fire regrowth advantage \code{eta_inv} is
-defined in the paper (this is intentional -- see the manuscript's
-discussion of why an analogous \code{eta_nat} is not defined). It converts
-to \code{Lrg_02} using \code{L_01} (not \code{L_02}) as the reference rate:
-\code{eta2lambda(eta_inv, L_01)} gives \code{Lrg_02}.
+Regrowth: both species' post-fire regrowth probabilities convert the
+same way, using \code{L_01} (not \code{L_02}) as the reference rate for both:
+\code{eta2lambda(eta_nat, L_01)} gives \code{Lrg_01} (native long-range
+regrowth), \code{eta2lambda(eta_inv, L_01)} gives \code{Lrg_02} (invader
+long-range regrowth). The paper's own parametrization sets
+\code{eta_nat = 0} (native has no post-fire regrowth advantage); \code{eta_nat}
+exists so the model can be used symmetrically for other systems.
 }

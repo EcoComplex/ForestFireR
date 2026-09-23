@@ -14,6 +14,7 @@ simulate_mean_field_stochastic(
   n5_0 = 0,
   xi_nat = 0.5,
   xi_inv = 0.6,
+  eta_nat = 0,
   eta_inv = 0.6,
   L_01 = 0.03,
   L_02 = 0.03,
@@ -40,9 +41,11 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 (\code{xi_nat = 0.5}, \code{xi_inv = 0.6}) put the native species right at that
 threshold and the invader moderately above it.}
 
-\item{eta_inv}{Invader post-fire regrowth probability (see
-\code{\link[=xi2lambda]{xi2lambda()}}); default \code{0.6} represents a moderate post-fire
-regrowth advantage for the invader.}
+\item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
+parametrization (no native post-fire regrowth advantage); default
+\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
+for the invader.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
 \code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to

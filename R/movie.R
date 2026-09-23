@@ -139,7 +139,7 @@
 #' }
 #' @export
 simulate_spatial_movie <- function(T, L = 100, density2 = 0.1, p = 1,
-                                    xi_nat = 0.5, xi_inv = 0.6, eta_inv = 0.6,
+                                    xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,
                                     L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                                     L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                                     periodic = TRUE, seed = NULL,
@@ -184,7 +184,7 @@ simulate_spatial_movie <- function(T, L = 100, density2 = 0.1, p = 1,
 
     r <- simulate_spatial_from_grid(
       T = chunk_T, initial_grid = grid,
-      xi_nat = xi_nat, xi_inv = xi_inv, eta_inv = eta_inv,
+      xi_nat = xi_nat, xi_inv = xi_inv, eta_nat = eta_nat, eta_inv = eta_inv,
       L_01 = L_01, L_02 = L_02, L_12 = L_12, L_21 = L_21,
       L_30 = L_30, Lig_13 = Lig_13, Lig_23 = Lig_23,
       periodic = periodic, seed = chunk_seed,

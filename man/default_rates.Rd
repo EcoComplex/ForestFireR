@@ -10,8 +10,9 @@ default_rates()
 A named list with the vegetation turnover rates
 (\code{L_01}, \code{L_02}, \code{L_12}, \code{L_21}), the fire persistence rate (\code{L_30},
 i.e. \eqn{\lambda^{F\emptyset}}), the invader's spontaneous ignition
-rate (\code{Lig_23}), and default dimensionless \code{xi_nat}, \code{xi_inv},
-\code{eta_inv} (see \code{\link[=xi2lambda]{xi2lambda()}}).
+rate (\code{Lig_23}), the native's spontaneous ignition rate (\code{Lig_13}),
+and default dimensionless \code{xi_nat}, \code{xi_inv}, \code{eta_nat}, \code{eta_inv}
+(see \code{\link[=xi2lambda]{xi2lambda()}}).
 }
 \description{
 Returns the baseline transition rates used throughout the paper (Table 1),

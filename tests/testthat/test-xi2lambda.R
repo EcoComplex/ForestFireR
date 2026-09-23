@@ -35,4 +35,8 @@ test_that("default_rates() gives Table 1's baseline values", {
   expect_equal(r$Lig_23, 1e-4)
   expect_equal(r$L_10, 0)       # no background mortality in the paper's model
   expect_equal(r$L_20, 0)
+  expect_equal(r$xi_nat, 0.5)
+  expect_equal(r$xi_inv, 0.6)
+  expect_equal(r$eta_nat, 0)    # no native post-fire regrowth advantage in the paper's model
+  expect_equal(r$eta_inv, 0.6)
 })

@@ -68,9 +68,11 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #'   threshold (see [xi2lambda()]'s Details); the defaults here
 #'   (`xi_nat = 0.5`, `xi_inv = 0.6`) put the native species right at that
 #'   threshold and the invader moderately above it.
-#' @param eta_inv Invader post-fire regrowth probability (see
-#'   [xi2lambda()]); default `0.6` represents a moderate post-fire
-#'   regrowth advantage for the invader.
+#' @param eta_nat,eta_inv Native/invader post-fire regrowth probabilities
+#'   (see [xi2lambda()]). Default `eta_nat = 0` matches the paper's own
+#'   parametrization (no native post-fire regrowth advantage); default
+#'   `eta_inv = 0.6` represents a moderate post-fire regrowth advantage
+#'   for the invader.
 #' @param L_01,L_02,L_12,L_21,L_30,Lig_13,Lig_23 Base rate constants; see
 #'   [default_rates()] for Table 1 defaults. Override individual entries to
 #'   explore parameter space, e.g. `L_21 = 0.02`.
@@ -122,7 +124,7 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #' }
 #' @export
 simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
-                              xi_nat = 0.5, xi_inv = 0.6, eta_inv = 0.6,
+                              xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,
                               L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                               L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                               periodic = TRUE, seed = NULL,
@@ -130,6 +132,7 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
                               capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
+  Lrg_01 <- eta2lambda(eta_nat, L_01)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
 
   simulate_spatial_cpp(
@@ -138,7 +141,7 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
     L_12_ = L_12, L_21_ = L_21,
     L_30_ = L_30, Lig_13_ = Lig_13, Lig_23_ = Lig_23,
     Lsp_13_ = Lsp_13, Lsp_23_ = Lsp_23,
-    Lrg_01_ = 0, Lrg_02_ = Lrg_02,
+    Lrg_01_ = Lrg_01, Lrg_02_ = Lrg_02,
     Lr_01_ = 0, Lr_02_ = 0, Lr_12_ = 0, Lr_21_ = 0,
     periodic = periodic, seed = .resolve_seed(seed),
     record_dt = record_dt, record_grid = record_grid,
@@ -176,13 +179,14 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
 #' }
 #' @export
 simulate_mean_field <- function(T, n1_0 = 0.9, n2_0 = 0.05, n3_0 = 0, n4_0 = 0.05, n5_0 = 0,
-                                 xi_nat = 0.5, xi_inv = 0.6, eta_inv = 0.6,
+                                 xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,
                                  L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                                  L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                                  record_dt = NULL) {
   if (is.null(record_dt)) record_dt <- T / 200
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
+  Lrg_01 <- eta2lambda(eta_nat, L_01)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
 
   simulate_mean_field_cpp(
@@ -190,7 +194,7 @@ simulate_mean_field <- function(T, n1_0 = 0.9, n2_0 = 0.05, n3_0 = 0, n4_0 = 0.0
     L_01_ = L_01, L_02_ = L_02, L_10_ = 0, L_20_ = 0,
     L_12_ = L_12, L_21_ = L_21, L_30_ = L_30,
     Lig_13_ = Lig_13, Lig_23_ = Lig_23, Lsp_13_ = Lsp_13, Lsp_23_ = Lsp_23,
-    Lrg_01_ = 0, Lrg_02_ = Lrg_02,
+    Lrg_01_ = Lrg_01, Lrg_02_ = Lrg_02,
     Lr_01_ = 0, Lr_02_ = 0, Lr_12_ = 0, Lr_21_ = 0,
     record_dt = record_dt
   )
@@ -217,13 +221,14 @@ simulate_mean_field <- function(T, n1_0 = 0.9, n2_0 = 0.05, n3_0 = 0, n4_0 = 0.0
 #' @export
 simulate_mean_field_stochastic <- function(T, N = 10000, n1_0 = 0.9, n2_0 = 0.05, n3_0 = 0,
                                             n4_0 = 0.05, n5_0 = 0,
-                                            xi_nat = 0.5, xi_inv = 0.6, eta_inv = 0.6,
+                                            xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,
                                             L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                                             L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                                             seed = NULL, record_dt = NULL) {
   if (is.null(record_dt)) record_dt <- T / 200
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
+  Lrg_01 <- eta2lambda(eta_nat, L_01)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
 
   simulate_mean_field_stochastic_cpp(
@@ -231,7 +236,7 @@ simulate_mean_field_stochastic <- function(T, N = 10000, n1_0 = 0.9, n2_0 = 0.05
     L_01_ = L_01, L_02_ = L_02, L_10_ = 0, L_20_ = 0,
     L_12_ = L_12, L_21_ = L_21, L_30_ = L_30,
     Lig_13_ = Lig_13, Lig_23_ = Lig_23, Lsp_13_ = Lsp_13, Lsp_23_ = Lsp_23,
-    Lrg_01_ = 0, Lrg_02_ = Lrg_02,
+    Lrg_01_ = Lrg_01, Lrg_02_ = Lrg_02,
     seed = .resolve_seed(seed), record_dt = record_dt
   )
 }
@@ -244,9 +249,11 @@ simulate_mean_field_stochastic <- function(T, N = 10000, n1_0 = 0.9, n2_0 = 0.05
 #' \eqn{V^{nat}}), `2` = invader vegetation (\eqn{V^{inv}}), `3` = active
 #' fire (\eqn{F}), `4` = unoccupied, never-yet-burned space
 #' (\eqn{\emptyset}), `5` = unoccupied, post-fire space (\eqn{\emptyset^F},
-#' the only one of the two empty states with a regrowth-rate advantage for
-#' the invader, via `eta_inv`). State `0` never appears -- it's an unused
-#' index in the underlying engine's state numbering.
+#' the only one of the two empty states with a long-range regrowth channel,
+#' via `eta_nat`/`eta_inv`; the paper's own parametrization sets
+#' `eta_nat = 0`, leaving only the invader with a regrowth advantage
+#' there). State `0` never appears -- it's an unused index in the
+#' underlying engine's state numbering.
 #' @export
 FF_STATE <- c(native = 1L, invader = 2L, fire = 3L, empty = 4L, empty_postfire = 5L)
 
@@ -347,7 +354,7 @@ generate_landscape_layers <- function(L = 100, fill_state, layers, seed = NULL) 
 #' @inheritParams simulate_spatial
 #' @export
 simulate_spatial_from_grid <- function(T, initial_grid,
-                                        xi_nat = 0.5, xi_inv = 0.6, eta_inv = 0.6,
+                                        xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,
                                         L_01 = 0.03, L_02 = 0.03, L_12 = 0.005, L_21 = 0.01,
                                         L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                                         periodic = TRUE, seed = NULL,
@@ -356,6 +363,7 @@ simulate_spatial_from_grid <- function(T, initial_grid,
                                         capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
+  Lrg_01 <- eta2lambda(eta_nat, L_01)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
 
   storage.mode(initial_grid) <- "integer"
@@ -366,7 +374,7 @@ simulate_spatial_from_grid <- function(T, initial_grid,
     L_12_ = L_12, L_21_ = L_21,
     L_30_ = L_30, Lig_13_ = Lig_13, Lig_23_ = Lig_23,
     Lsp_13_ = Lsp_13, Lsp_23_ = Lsp_23,
-    Lrg_01_ = 0, Lrg_02_ = Lrg_02,
+    Lrg_01_ = Lrg_01, Lrg_02_ = Lrg_02,
     Lr_01_ = 0, Lr_02_ = 0, Lr_12_ = 0, Lr_21_ = 0,
     periodic = periodic, seed = .resolve_seed(seed),
     record_dt = record_dt, record_grid = record_grid,

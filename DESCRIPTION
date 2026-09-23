@@ -1,7 +1,7 @@
 Package: ForestFireR
 Type: Package
 Title: Spatial and Mean-Field Forest-Fire Invasion Model
-Version: 0.5.0
+Version: 0.6.0
 Author: Leonardo A. Saravia, Rebeca de la Fuente
 Maintainer: Leonardo A. Saravia <lasaravia@untdf.edu.ar>
 Description: R/Rcpp interface to a spatial stochastic (Gillespie) and
@@ -23,3 +23,4 @@ Roxygen: list(markdown = TRUE)
 NeedsCompilation: yes
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3
+RoxygenNote: 7.3.1
