@@ -1,5 +1,49 @@
 # NEWS
 
+## ForestFireR 0.5.0
+
+### Testing
+
+* Added a `testthat` (edition 3) unit test suite (`tests/testthat/`, the
+  package's first), 8 files and 130+ expectations. All check exact, a
+  priori known outcomes rather than statistical properties:
+  - `test-null-dynamics.R`: with every rate at zero, the grid comes out
+    byte-for-byte identical to how it went in and `time_sim = 0`.
+  - `test-single-species-colonization.R`: with only one species present
+    and no fire, colonization deterministically fills every empty site
+    with that species (`n1 = 1` or `n2 = 1`, exactly).
+  - `test-ignition-disabled.R`: with `Lig_13 = Lig_23 = 0`, fire and
+    post-fire empty ground never appear, even with fire-spread rates set
+    high.
+  - `test-isolated-fire-burn.R`: with fire spread and new ignition both
+    off, an isolated burning cell burns out to exactly one
+    empty-post-fire site and nothing else in the grid changes.
+  - `test-reproducibility.R`: a fixed seed reproduces the exact same run
+    (spatial and well-mixed stochastic engines), and different seeds do
+    not coincide.
+  - `test-mass-conservation.R`: `n1+n2+n3+n4+n5 = 1` at every recorded
+    point of the trajectory, for all three engines (spatial, mean-field
+    ODE, well-mixed stochastic).
+  - `test-no-na-regression.R`: a regression guard against the NA-output
+    class of bug previously found in Fig. 6 (see the repo's
+    `fig6_lambda_na_bug` notes) -- asserts finite, non-negative,
+    conserved output under Table 1's own default rates.
+  - `test-xi2lambda.R`: exact closed-form checks of the `xi`/`eta` ->
+    rate conversion and of `default_rates()`'s Table 1 values.
+* Added `testthat (>= 3.0.0)` to `Suggests` and
+  `Config/testthat/edition: 3` to `DESCRIPTION`.
+
+### Investigated, not a bug
+
+* Confirmed that `simulate_*()`'s returned `time_sim` can exceed the
+  requested `T`, sometimes by a non-trivial margin. This is expected
+  Gillespie behavior, not a bug: the loop must apply the event that
+  crosses the requested horizon in order to report a valid state, and
+  that event's own waiting time can be large whenever the total
+  propensity is low at that point in the run. Tests that check timing
+  assert `time_sim >= T` (barring extinction/absorption), never
+  closeness to `T`.
+
 ## ForestFireR 0.4.01
 
 ### Bug fixes
