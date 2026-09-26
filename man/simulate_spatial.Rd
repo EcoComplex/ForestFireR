@@ -25,7 +25,8 @@ simulate_spatial(
   record_dt = -1,
   record_grid = FALSE,
   capture_fire_snapshots = FALSE,
-  fire_snapshot_min_gap = 0.001
+  fire_snapshot_min_gap = 0.001,
+  engine = c("tree", "linear")
 )
 }
 \arguments{
@@ -96,6 +97,13 @@ two fire snapshots; keeps a single outbreak from filling the returned
 list with near-duplicate frames. Default \code{0.001} (~9 hours) is well
 under a typical outbreak's total duration but well above the time
 between individual Gillespie events during one.}
+
+\item{engine}{Gillespie event-selection method: \code{"tree"} (default) keeps
+per-site rates in a binary sum tree, O(log N) per event; \code{"linear"} is
+the original cumulative scan over all sites, O(N) per event, kept to
+reproduce runs made with ForestFireR < 0.7.0. Both select events with
+the same probabilities (and, for a given seed, the same events up to
+floating-point rounding).}
 }
 \value{
 A list with the final \code{time_sim} and densities \code{n0}..\code{n5}

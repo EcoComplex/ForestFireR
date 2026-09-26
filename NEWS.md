@@ -1,5 +1,23 @@
 # NEWS
 
+## ForestFireR 0.7.0
+
+### New features
+
+* New `engine` argument in `simulate_spatial()` and
+  `simulate_spatial_from_grid()`. The default, `engine = "tree"`, selects
+  each Gillespie event by descending a binary sum tree of per-site rates
+  (O(log N) per event) instead of scanning all sites (O(N) per event).
+  Runs are 190x faster at L = 100 and about 700x faster at L = 200 for
+  fire-dominated dynamics. The total rate is read from the tree root, so it
+  no longer accumulates round-off over long runs.
+* `engine = "linear"` keeps the previous scan unchanged, reproducing runs
+  made with earlier versions exactly for a given seed. Both engines pick
+  the same event for the same random number; results differ only through
+  floating-point rounding, which can make long runs with the same seed
+  diverge while leaving their distribution unchanged (validated against the
+  linear engine; see `tests/testthat/test-engine.R`).
+
 ## ForestFireR 0.6.0
 
 ### New features

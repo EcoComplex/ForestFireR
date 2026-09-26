@@ -10,6 +10,16 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// set_engine_cpp
+void set_engine_cpp(bool tree);
+RcppExport SEXP _ForestFireR_set_engine_cpp(SEXP treeSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< bool >::type tree(treeSEXP);
+    set_engine_cpp(tree);
+    return R_NilValue;
+END_RCPP
+}
 // set_seed_cpp
 void set_seed_cpp(int seed);
 RcppExport SEXP _ForestFireR_set_seed_cpp(SEXP seedSEXP) {
@@ -192,6 +202,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ForestFireR_set_engine_cpp", (DL_FUNC) &_ForestFireR_set_engine_cpp, 1},
     {"_ForestFireR_set_seed_cpp", (DL_FUNC) &_ForestFireR_set_seed_cpp, 1},
     {"_ForestFireR_generate_landscape_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_cpp, 4},
     {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 27},

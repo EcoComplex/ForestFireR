@@ -76,6 +76,12 @@ generate_landscape <- function(L = 100, density2 = 0.1, p = 1, seed = NULL) {
 #' @param L_01,L_02,L_12,L_21,L_30,Lig_13,Lig_23 Base rate constants; see
 #'   [default_rates()] for Table 1 defaults. Override individual entries to
 #'   explore parameter space, e.g. `L_21 = 0.02`.
+#' @param engine Gillespie event-selection method: `"tree"` (default) keeps
+#'   per-site rates in a binary sum tree, O(log N) per event; `"linear"` is
+#'   the original cumulative scan over all sites, O(N) per event, kept to
+#'   reproduce runs made with ForestFireR < 0.7.0. Both select events with
+#'   the same probabilities (and, for a given seed, the same events up to
+#'   floating-point rounding).
 #' @param periodic Use periodic boundary conditions (paper default `TRUE`).
 #' @param seed Integer RNG seed, or `NULL` for a fresh, non-reproducible seed.
 #' @param record_dt Trajectory sampling interval, in the same time units as
@@ -129,12 +135,15 @@ simulate_spatial <- function(T, L = 100, density2 = 0.1, p = 1,
                               L_30 = 1e6, Lig_13 = 0, Lig_23 = 1e-4,
                               periodic = TRUE, seed = NULL,
                               record_dt = -1, record_grid = FALSE,
-                              capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
+                              capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001,
+                              engine = c("tree", "linear")) {
+  engine <- match.arg(engine)
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
   Lrg_01 <- eta2lambda(eta_nat, L_01)
   Lrg_02 <- eta2lambda(eta_inv, L_01)
 
+  set_engine_cpp(engine == "tree")
   simulate_spatial_cpp(
     T = T, Lgrid = as.integer(L), density2 = density2, p = p,
     L_01_ = L_01, L_02_ = L_02, L_10_ = 0, L_20_ = 0,
@@ -360,7 +369,9 @@ simulate_spatial_from_grid <- function(T, initial_grid,
                                         periodic = TRUE, seed = NULL,
                                         record_dt = -1, record_grid = FALSE,
                                         check_extinction = TRUE,
-                                        capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001) {
+                                        capture_fire_snapshots = FALSE, fire_snapshot_min_gap = 0.001,
+                                        engine = c("tree", "linear")) {
+  engine <- match.arg(engine)
   Lsp_13 <- xi2lambda(xi_nat, L_30)
   Lsp_23 <- xi2lambda(xi_inv, L_30)
   Lrg_01 <- eta2lambda(eta_nat, L_01)
@@ -368,6 +379,7 @@ simulate_spatial_from_grid <- function(T, initial_grid,
 
   storage.mode(initial_grid) <- "integer"
 
+  set_engine_cpp(engine == "tree")
   simulate_spatial_from_grid_cpp(
     T = T, initial_grid = initial_grid,
     L_01_ = L_01, L_02_ = L_02, L_10_ = 0, L_20_ = 0,

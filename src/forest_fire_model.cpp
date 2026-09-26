@@ -3162,6 +3162,66 @@ static void MaybeCaptureFireSnapshot(long double min_gap)
 //   record_dt == 0 -> record every accepted event (dense, memory heavy)
 //   record_dt > 0  -> record a sample every record_dt time units
 //=====================================================================
+//=====================================================================
+// Event selection engine for SpatialModelSimplified_Rec.
+//
+// use_tree_engine = true (default, v0.7.0): the per-site total rates
+// a_k = sum_j A[k][j] are kept in a binary sum tree (leaves in site order
+// k = 0..N-1, each internal node = sum of its two children, root = total
+// rate). The Gillespie event is selected by descending the tree with
+// target = random * total, which picks the same (k, j) as a linear
+// cumulative scan in site order would (up to floating-point rounding), in
+// O(log N) instead of O(N * r) per event. The total rate is read from the
+// root, recomputed from the leaves on every update, so it does not drift.
+//
+// use_tree_engine = false: the original linear scan with a running total,
+// kept unchanged for validation and exact reproduction of earlier runs.
+//=====================================================================
+static bool use_tree_engine = true;
+static std::vector<long double> rate_tree;
+static int rate_tree_M = 0;   // number of leaves (power of two >= N)
+
+static long double site_total_rate(int k)
+{
+    long double a = 0;
+    for (int j = 0; j < r; j++) { a += A[k][j]; }
+    return a;
+}
+
+static void rate_tree_build()
+{
+    rate_tree_M = 1;
+    while (rate_tree_M < N) { rate_tree_M <<= 1; }
+    rate_tree.assign(2 * rate_tree_M, 0.0L);
+    for (int k = 0; k < N; k++) { rate_tree[rate_tree_M + k] = site_total_rate(k); }
+    for (int i = rate_tree_M - 1; i >= 1; i--) { rate_tree[i] = rate_tree[2*i] + rate_tree[2*i+1]; }
+}
+
+static void rate_tree_set(int k)
+{
+    int i = rate_tree_M + k;
+    rate_tree[i] = site_total_rate(k);
+    for (i >>= 1; i >= 1; i >>= 1) { rate_tree[i] = rate_tree[2*i] + rate_tree[2*i+1]; }
+}
+
+// Returns the site whose cumulative-rate interval contains `target`
+// (0 <= target < total); on return `target` is the offset inside that site.
+// Never descends into a zero-rate subtree.
+static int rate_tree_find(long double &target)
+{
+    int i = 1;
+    while (i < rate_tree_M) {
+        long double left = rate_tree[2*i];
+        long double right = rate_tree[2*i+1];
+        if ((target < left && left > 0) || right <= 0) { i = 2*i; }
+        else { target -= left; i = 2*i + 1; }
+    }
+    return i - rate_tree_M;
+}
+
+// [[Rcpp::export]]
+void set_engine_cpp(bool tree) { use_tree_engine = tree; }
+
 void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction,
                                  bool capture_fire_snapshots, long double fire_snapshot_min_gap)
 {
@@ -3183,6 +3243,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         VegetationFireModel_Rates(k);
         for (int j = 0; j < r; j++) { sumA = sumA + A[k][j]; }
     }
+    if (use_tree_engine) { rate_tree_build(); sumA = rate_tree[1]; }
     if (sumA < 0.00000001) { sumA = 0; }
 
     bool ext = false;
@@ -3235,6 +3296,23 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         // k < N plus the deterministic fallback below fix that; the periodic
         // sumA resync further down keeps the round-off small so the fallback
         // is a rare safety net rather than something regularly exercised.
+        if (use_tree_engine && sumA != 0) {
+            long double target = random * sumA;
+            int kk = rate_tree_find(target);
+            long double acc = 0;
+            int last_pos = -1;
+            for (int j = 0; j < r; j++) {
+                if (A[kk][j] > 0) {
+                    last_pos = j;
+                    if (target < acc + A[kk][j]) { apply_reaction(kk, j); update = true; break; }
+                    acc += A[kk][j];
+                }
+            }
+            // Rounding left target at (or just past) the end of the site's
+            // interval: take its last reaction with a non-zero rate.
+            if (!update && last_pos >= 0) { apply_reaction(kk, last_pos); update = true; }
+            k = N;   // skip the linear scan below
+        }
         while (update == false && sumA != 0 && k < N) {
             for (int j = 0; j < r; j++) {
                 if (sumt / sumA <= random && random < (sumt + A[k][j]) / sumA) {
@@ -3263,53 +3341,53 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         nx=candidatex; ny=candidatey; nk=candidatek;
         if (nx>=0 && nx<L && ny>=0 && ny<L) {
             for (int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];}
-            VegetationFireModel_Rates(nk);
+            VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); }
             for (int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];}
         }
         nx=candidatex+1; ny=candidatey; nk=candidatek+L;
         if (nx>=0 && nx<L && ny>=0 && ny<L) {
             for (int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];}
-            VegetationFireModel_Rates(nk);
+            VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); }
             for (int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];}
         }
         nx=candidatex-1; ny=candidatey; nk=candidatek-L;
         if (nx>=0 && nx<L && ny>=0 && ny<L) {
             for (int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];}
-            VegetationFireModel_Rates(nk);
+            VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); }
             for (int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];}
         }
         nx=candidatex; ny=candidatey+1; nk=candidatek+1;
         if (nx>=0 && nx<L && ny>=0 && ny<L) {
             for (int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];}
-            VegetationFireModel_Rates(nk);
+            VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); }
             for (int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];}
         }
         nx=candidatex; ny=candidatey-1; nk=candidatek-1;
         if (nx>=0 && nx<L && ny>=0 && ny<L) {
             for (int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];}
-            VegetationFireModel_Rates(nk);
+            VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); }
             for (int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];}
         }
 
         if (PeriodicBoundaryConditions == true) {
             nx=candidatex+1; ny=candidatey;
-            if (nx<0)   { nx=nx+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
-            if (nx>L-1) { nx=nx-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (nx<0)   { nx=nx+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (nx>L-1) { nx=nx-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
 
             nx=candidatex-1; ny=candidatey;
-            if (nx<0)   { nx=nx+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
-            if (nx>L-1) { nx=nx-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (nx<0)   { nx=nx+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (nx>L-1) { nx=nx-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
 
             nx=candidatex; ny=candidatey+1;
-            if (ny<0)   { ny=ny+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
-            if (ny>L-1) { ny=ny-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (ny<0)   { ny=ny+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (ny>L-1) { ny=ny-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
 
             nx=candidatex; ny=candidatey-1;
-            if (ny<0)   { ny=ny+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
-            if (ny>L-1) { ny=ny-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (ny<0)   { ny=ny+L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
+            if (ny>L-1) { ny=ny-L; GridMap(nx,ny,L,nk); for(int j=0;j<r;j++){sum_aux=sum_aux-A[nk][j];} VegetationFireModel_Rates(nk); if (use_tree_engine) { rate_tree_set(nk); } for(int j=0;j<r;j++){sum_aux=sum_aux+A[nk][j];} }
         }
 
-        sumA = sum_aux;
+        sumA = use_tree_engine ? rate_tree[1] : sum_aux;
         if (sumA < 0.00000001) { sumA = 0; }
 
         // Periodically recompute sumA exactly from A[][] instead of trusting
@@ -3321,7 +3399,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         // drifts. This full O(N*r) pass is cheap when amortized over 20000
         // events.
         resync_counter++;
-        if (resync_counter % 20000 == 0) {
+        if (!use_tree_engine && resync_counter % 20000 == 0) {
             long double resynced = 0;
             for (int kk = 0; kk < N; kk++) { for (int jj = 0; jj < r; jj++) { resynced += A[kk][jj]; } }
             sumA = resynced;
