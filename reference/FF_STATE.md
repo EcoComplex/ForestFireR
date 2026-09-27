@@ -19,7 +19,3 @@ index in the underlying engine's state numbering.
 ``` r
 FF_STATE
 ```
-
-## Format
-
-An object of class `integer` of length 5.

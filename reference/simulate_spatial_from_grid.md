@@ -40,7 +40,8 @@ simulate_spatial_from_grid(
   record_grid = FALSE,
   check_extinction = TRUE,
   capture_fire_snapshots = FALSE,
-  fire_snapshot_min_gap = 0.001
+  fire_snapshot_min_gap = 0.001,
+  engine = c("tree", "linear")
 )
 ```
 
@@ -144,3 +145,12 @@ simulate_spatial_from_grid(
   frames. Default `0.001` (~9 hours) is well under a typical outbreak's
   total duration but well above the time between individual Gillespie
   events during one.
+
+- engine:
+
+  Gillespie event-selection method: `"tree"` (default) keeps per-site
+  rates in a binary sum tree, O(log N) per event; `"linear"` is the
+  original cumulative scan over all sites, O(N) per event, kept to
+  reproduce runs made with ForestFireR \< 0.7.0. Both select events with
+  the same probabilities (and, for a given seed, the same events up to
+  floating-point rounding).

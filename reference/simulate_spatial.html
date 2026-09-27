@@ -15,7 +15,7 @@ spatial dynamics, as described in the paper."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">ForestFireR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,8 @@ spatial dynamics, as described in the paper.</p>
 <span>  record_dt <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
 <span>  record_grid <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  capture_fire_snapshots <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  fire_snapshot_min_gap <span class="op">=</span> <span class="fl">0.001</span></span>
+<span>  fire_snapshot_min_gap <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tree"</span>, <span class="st">"linear"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -171,6 +172,15 @@ two fire snapshots; keeps a single outbreak from filling the returned
 list with near-duplicate frames. Default <code>0.001</code> (~9 hours) is well
 under a typical outbreak's total duration but well above the time
 between individual Gillespie events during one.</p></dd>
+
+
+<dt id="arg-engine">engine<a class="anchor" aria-label="anchor" href="#arg-engine"></a></dt>
+<dd><p>Gillespie event-selection method: <code>"tree"</code> (default) keeps
+per-site rates in a binary sum tree, O(log N) per event; <code>"linear"</code> is
+the original cumulative scan over all sites, O(N) per event, kept to
+reproduce runs made with ForestFireR &lt; 0.7.0. Both select events with
+the same probabilities (and, for a given seed, the same events up to
+floating-point rounding).</p></dd>
 
 </dl></div>
     <div class="section level2">
