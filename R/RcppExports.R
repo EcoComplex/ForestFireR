@@ -5,6 +5,10 @@ set_engine_cpp <- function(tree) {
     invisible(.Call(`_ForestFireR_set_engine_cpp`, tree))
 }
 
+set_rng_cpp <- function(legacy) {
+    invisible(.Call(`_ForestFireR_set_rng_cpp`, legacy))
+}
+
 set_seed_cpp <- function(seed) {
     invisible(.Call(`_ForestFireR_set_seed_cpp`, seed))
 }

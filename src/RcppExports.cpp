@@ -20,6 +20,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// set_rng_cpp
+void set_rng_cpp(bool legacy);
+RcppExport SEXP _ForestFireR_set_rng_cpp(SEXP legacySEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< bool >::type legacy(legacySEXP);
+    set_rng_cpp(legacy);
+    return R_NilValue;
+END_RCPP
+}
 // set_seed_cpp
 void set_seed_cpp(int seed);
 RcppExport SEXP _ForestFireR_set_seed_cpp(SEXP seedSEXP) {
@@ -203,6 +213,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ForestFireR_set_engine_cpp", (DL_FUNC) &_ForestFireR_set_engine_cpp, 1},
+    {"_ForestFireR_set_rng_cpp", (DL_FUNC) &_ForestFireR_set_rng_cpp, 1},
     {"_ForestFireR_set_seed_cpp", (DL_FUNC) &_ForestFireR_set_seed_cpp, 1},
     {"_ForestFireR_generate_landscape_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_cpp, 4},
     {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 27},

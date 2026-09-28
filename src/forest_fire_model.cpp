@@ -94,6 +94,47 @@
 #include <chrono>
 #include <cmath>
 #include <Rcpp.h>
+#include <random>
+
+//=====================================================================
+// Random numbers (v0.8.0).
+// Default: std::mt19937_64 (Mersenne Twister, 64-bit), whose output
+// sequence for a given seed is fixed by the C++ standard, so a seed gives
+// the same run on every platform and compiler. Uniform reals are built
+// here from 53 random bits (not with std::uniform_real_distribution, whose
+// algorithm is implementation-defined), and integers in [0, n) with
+// Lemire's multiply-shift rejection method (unbiased).
+// Legacy: the C library rand()/srand() used up to v0.7.x, kept to
+// reproduce earlier runs (select it from R with
+// options(ForestFireR.rng = "legacy")). rand() has only 31 random bits,
+// can return exactly 0, and differs between C libraries (glibc, macOS), so
+// the same seed gave different runs on different platforms.
+//=====================================================================
+static std::mt19937_64 ffr_mt(5489ULL);
+static bool ffr_legacy_rng = false;
+
+// Uniform on [0, 1).
+static inline double ffr_unif()
+{
+    if (ffr_legacy_rng) { return (double) rand() / (RAND_MAX); }
+    return (double) (ffr_mt() >> 11) * 0x1.0p-53;
+}
+
+// Uniform integer on [0, n), n >= 1.
+static inline unsigned long long ffr_randint(unsigned long long n)
+{
+    if (ffr_legacy_rng) { return (unsigned long long) rand() % n; }
+    // Lemire (2019), nearly divisionless unbiased bounded integers.
+    unsigned long long x = ffr_mt();
+    __uint128_t m = (__uint128_t) x * (__uint128_t) n;
+    unsigned long long l = (unsigned long long) m;
+    if (l < n) {
+        unsigned long long t = (0ULL - n) % n;
+        while (l < t) { x = ffr_mt(); m = (__uint128_t) x * (__uint128_t) n; l = (unsigned long long) m; }
+    }
+    return (unsigned long long) (m >> 64);
+}
+
 
 using namespace std;
 
@@ -477,10 +518,12 @@ void SeedRNG(int seed)
 {
     if (seed >= 0) {
         srand((unsigned) seed);
+        ffr_mt.seed((unsigned long long) seed);
     } else {
         seed_call_counter++;
         unsigned long t = (unsigned long) std::chrono::high_resolution_clock::now().time_since_epoch().count();
         srand((unsigned) (t ^ (seed_call_counter * 2654435761UL)));
+        ffr_mt.seed((unsigned long long) t ^ (seed_call_counter * 0x9E3779B97F4A7C15ULL));
     }
 }
 
@@ -569,7 +612,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
         {
             Rcpp::stop("InitialConditionNonHomogeneous: no cells in the requested background state are left to seed the pattern from (background fully consumed by a prior layer).");
         }
-        random_int = bg_candidates[rand() % bg_candidates.size()];
+        random_int = bg_candidates[ffr_randint(bg_candidates.size())];
     }
     ReverseGridMap(ix,jx,L,random_int);
     S[ix][jx]=state2;
@@ -772,7 +815,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
                                "strict Appendix B run." << std::endl;
             }
             // relaxed: accept ANY remaining state1 site, no isolation requirement
-            random_int = (rand() % (N));
+            random_int = (ffr_randint(N));
             ReverseGridMap(ix,jx,L,random_int);
             if(S[ix][jx]==state1)
             {
@@ -782,7 +825,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             continue;
         }
 
-        random_int = (rand() % (N));
+        random_int = (ffr_randint(N));
         ReverseGridMap(ix,jx,L,random_int);
         if(S[ix][jx]==state1)
         {
@@ -866,9 +909,9 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
             continue;
         }
 
-          random_int = (rand() % (cluster.size()));
+          random_int = (ffr_randint(cluster.size()));
           ReverseGridMap(ix,jx,L,cluster[random_int]);
-          random_int_neigh = (rand() % (4));
+          random_int_neigh = (ffr_randint(4));
 
                        
           if(random_int_neigh==0)
@@ -1122,7 +1165,7 @@ for(int i=0;i<L;i++)
     long double nclusters=0;
     while(nclusters<number_clusters)
     {
-        random_int = (rand() % (N));
+        random_int = (ffr_randint(N));
         int ix,jx;
         ReverseGridMap(ix,jx,L,random_int);
         if(S[ix][jx]==1)
@@ -1146,9 +1189,9 @@ for(int i=0;i<L;i++)
     
 
   
-          random_int = (rand() % (cluster.size()));
+          random_int = (ffr_randint(cluster.size()));
           ReverseGridMap(ix,jx,L,cluster[random_int]);          
-          random_int_neigh = (rand() % (4));
+          random_int_neigh = (ffr_randint(4));
          
         
           if(random_int_neigh==0 && (ix+1)>=0 && (ix+1)<L)
@@ -1336,7 +1379,7 @@ int random_int;
 int ix,jx;
 for(int i=1;i<density2*N;i++)
 {
-    random_int = (rand() % (N));
+    random_int = (ffr_randint(N));
     ReverseGridMap(ix,jx,L,random_int);
     S[ix][jx]=2;
     N1--;
@@ -1410,14 +1453,14 @@ std::cout << std::setprecision(10) << std::fixed;
 
     
         
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         tau = -log(random)/sumA;
         time_sim=time_sim+tau;
         
         
 
         
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         sumt=0;  
         bool update=false;
         int k=0;
@@ -1738,7 +1781,7 @@ for(int i=0;i<L;i++)
     vector<int> cluster; 
 
     //Seed of V2
-    int random_int = (rand() % (N));
+    int random_int = (ffr_randint(N));
     int ix,jx;
     ReverseGridMap(ix,jx,L,random_int);
     S[ix][jx]=2;
@@ -1755,9 +1798,9 @@ for(int i=0;i<L;i++)
     
 
   
-          random_int = (rand() % (cluster.size()));
+          random_int = (ffr_randint(cluster.size()));
           ReverseGridMap(ix,jx,L,cluster[random_int]);          
-          random_int_neigh = (rand() % (4));
+          random_int_neigh = (ffr_randint(4));
          
         
           if(random_int_neigh==0 && (ix+1)>=0 && (ix+1)<L)
@@ -1892,12 +1935,12 @@ long double dt_movie=0.1;
 
         cout<<time<<" "<<n1<<" "<<n2<<" "<<n3<<" "<<n0<<endl;  
         
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         tau = -log(random)/sumA;
         time=time+tau;
 
         
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         sumt=0;  
         bool update=false;
         int k=0;
@@ -2709,13 +2752,13 @@ long double sumA=1;
         sumA=0;
         for(int i=0;i<kr;i++){sumA=sumA+W[i];}
 
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         tau = -log(random)/sumA;
         time=time+tau;
         cout<<time<<" "<<n1<<" "<<n2<<" "<<n3<<" "<<n0<<endl;                       
 
 
-        random = ((double) rand() / (RAND_MAX));           
+        random = ffr_unif();           
         if(random<(W[0]/sumA))
         {          
            N4--;
@@ -2989,11 +3032,11 @@ long double random;
         
         
         
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         tau = -log(random)/sumA;
         
       
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         sumt=0;
         for(int k=0;k<N;k++)
         {
@@ -3222,6 +3265,9 @@ static int rate_tree_find(long double &target)
 // [[Rcpp::export]]
 void set_engine_cpp(bool tree) { use_tree_engine = tree; }
 
+// [[Rcpp::export]]
+void set_rng_cpp(bool legacy) { ffr_legacy_rng = legacy; }
+
 void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction,
                                  bool capture_fire_snapshots, long double fire_snapshot_min_gap)
 {
@@ -3260,16 +3306,17 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
 
         if (check_extinction && n1 < 0.0001) { ext = true; }
 
-        // rand() can return exactly 0 (probability 1/2^31 per draw), which
+        // A uniform draw can be exactly 0 (1 in 2^31 with legacy rand(),
+        // 1 in 2^53 with mt19937_64), which
         // would give tau = -log(0)/sumA = Inf; time_sim = Inf then made the
         // record_dt loop below push samples forever until the process ran
         // out of memory. Redraw in that case: the event sequence is unchanged
         // for every run that never hit it.
-        do { random = ((double) rand() / (RAND_MAX)); } while (random <= 0);
+        do { random = ffr_unif(); } while (random <= 0);
         tau = -log(random) / sumA;
         time_sim = time_sim + tau;
 
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         sumt = 0;
         bool update = false;
         int k = 0;
@@ -3561,11 +3608,11 @@ void MeanFieldGillespie_Rec(long double &T, long double &record_dt, long double 
         for (int i=0;i<kr;i++){sumA=sumA+W[i];}
         if (sumA < 0.00000001) { sumA = 0; break; }
 
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         tau = -log(random)/sumA;
         time = time + tau;
 
-        random = ((double) rand() / (RAND_MAX));
+        random = ffr_unif();
         long double cum = 0;
         int chosen = -1;
         for (int i=0;i<kr;i++) {

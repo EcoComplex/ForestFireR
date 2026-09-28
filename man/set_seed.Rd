@@ -10,8 +10,12 @@ set_seed(seed)
 \item{seed}{Integer seed.}
 }
 \description{
-The simulation engine uses the C \code{rand()}/\code{srand()} generator (as the
-original model code did), which is independent of R's own RNG. Every
+The simulation engine uses its own random number generator, independent
+of R's: by default the 64-bit Mersenne Twister (\code{std::mt19937_64}),
+which gives the same run for a given seed on every platform. Set
+\code{options(ForestFireR.rng = "legacy")} to use the C library
+\code{rand()}/\code{srand()} generator of versions up to 0.7.x instead (only to
+reproduce earlier runs; its sequence differs between platforms). Every
 \verb{simulate_*()}/\code{generate_landscape()} call below takes its own \code{seed}
 argument (preferred, for reproducible individual runs); call
 \code{set_seed()} directly only if you need to seed once and then make several
