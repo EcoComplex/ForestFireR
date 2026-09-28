@@ -3260,7 +3260,12 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
 
         if (check_extinction && n1 < 0.0001) { ext = true; }
 
-        random = ((double) rand() / (RAND_MAX));
+        // rand() can return exactly 0 (probability 1/2^31 per draw), which
+        // would give tau = -log(0)/sumA = Inf; time_sim = Inf then made the
+        // record_dt loop below push samples forever until the process ran
+        // out of memory. Redraw in that case: the event sequence is unchanged
+        // for every run that never hit it.
+        do { random = ((double) rand() / (RAND_MAX)); } while (random <= 0);
         tau = -log(random) / sumA;
         time_sim = time_sim + tau;
 
@@ -3412,7 +3417,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         if (capture_fire_snapshots) { MaybeCaptureFireSnapshot(fire_snapshot_min_gap); }
 
         if (record_dt > 0) {
-            while (time_sim >= next_record) { PushRecording(time_sim); next_record += record_dt; }
+            while (time_sim >= next_record && next_record <= T) { PushRecording(time_sim); next_record += record_dt; }
         } else if (record_dt == 0) {
             PushRecording(time_sim);
         }
