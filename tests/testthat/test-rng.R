@@ -18,13 +18,24 @@ test_that("mt19937 and legacy generators give different runs for the same seed",
   expect_identical(sum(g1 == 2L), sum(g2 == 2L))   # same density either way
 })
 
-test_that("mt19937 landscapes are the same on every platform", {
-  # Reference values computed on Linux (glibc, x86-64); std::mt19937_64's
-  # output is fixed by the C++ standard, so any platform must match.
-  g <- with_rng("mt19937", generate_landscape(L = 30, density2 = 0.2, p = 0.8, seed = 42))
-  expect_identical(c(sum(g == 2L), sum(which(g == 2L))), c(180L, 89021L))
-  g <- with_rng("mt19937", generate_landscape(L = 30, density2 = 0.2, p = 0, seed = 42))
-  expect_identical(c(sum(g == 2L), sum(which(g == 2L))), c(180L, 80562L))
+test_that("the mt19937 random stream is the same on every platform", {
+  # std::mt19937_64's output for a given seed is fixed by the C++ standard.
+  # Reference values computed on Linux (glibc, x86-64). Uniforms are
+  # k / 2^53 with integer k, so k is compared exactly.
+  r <- with_rng("mt19937", { ForestFireR:::.ffr_apply_rng(); ForestFireR:::rng_draws_cpp(3L, 42L) })
+  expect_identical(r$u * 2^53, c(6801836353641660, 5755883094484128, 6774721691634639))
+  expect_identical(r$k, c(136272683L, 903268966L, 94068311L))
+})
+
+test_that("mt19937 landscapes are reproducible for a given seed", {
+  # Landscapes (and simulations) are reproducible on a given machine, but
+  # not bit-identical across platforms: the model computes in `long double`,
+  # which is 80-bit on x86-64 and 64-bit on Apple Silicon, so comparisons of
+  # nearly equal quantities can go different ways even with the same random
+  # stream.
+  g1 <- with_rng("mt19937", generate_landscape(L = 30, density2 = 0.2, p = 0.8, seed = 42))
+  g2 <- with_rng("mt19937", generate_landscape(L = 30, density2 = 0.2, p = 0.8, seed = 42))
+  expect_identical(g1, g2)
 })
 
 test_that("an invalid ForestFireR.rng option is rejected", {

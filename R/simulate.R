@@ -16,7 +16,9 @@
 #'
 #' The simulation engine uses its own random number generator, independent
 #' of R's: by default the 64-bit Mersenne Twister (`std::mt19937_64`),
-#' which gives the same run for a given seed on every platform. Set
+#' whose random sequence for a given seed is the same on every platform
+#' (runs themselves can still differ across platforms, because the model
+#' computes in `long double`, whose precision is platform-dependent). Set
 #' `options(ForestFireR.rng = "legacy")` to use the C library
 #' `rand()`/`srand()` generator of versions up to 0.7.x instead (only to
 #' reproduce earlier runs; its sequence differs between platforms). Every

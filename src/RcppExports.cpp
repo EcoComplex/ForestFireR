@@ -30,6 +30,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// rng_draws_cpp
+Rcpp::List rng_draws_cpp(int n, int seed);
+RcppExport SEXP _ForestFireR_rng_draws_cpp(SEXP nSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(rng_draws_cpp(n, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
 // set_seed_cpp
 void set_seed_cpp(int seed);
 RcppExport SEXP _ForestFireR_set_seed_cpp(SEXP seedSEXP) {
@@ -214,6 +226,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ForestFireR_set_engine_cpp", (DL_FUNC) &_ForestFireR_set_engine_cpp, 1},
     {"_ForestFireR_set_rng_cpp", (DL_FUNC) &_ForestFireR_set_rng_cpp, 1},
+    {"_ForestFireR_rng_draws_cpp", (DL_FUNC) &_ForestFireR_rng_draws_cpp, 2},
     {"_ForestFireR_set_seed_cpp", (DL_FUNC) &_ForestFireR_set_seed_cpp, 1},
     {"_ForestFireR_generate_landscape_cpp", (DL_FUNC) &_ForestFireR_generate_landscape_cpp, 4},
     {"_ForestFireR_simulate_spatial_cpp", (DL_FUNC) &_ForestFireR_simulate_spatial_cpp, 27},

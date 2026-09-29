@@ -7,7 +7,8 @@
 * Random numbers now come from `std::mt19937_64` (64-bit Mersenne Twister)
   instead of the C library `rand()`. Its output for a given seed is fixed by
   the C++ standard, so a seed gives the same random sequence on every
-  platform; `rand()` differs between C libraries (glibc, macOS), had only
+  platform (runs can still differ across platforms, because the model
+  computes in `long double`: 80-bit on x86-64, 64-bit on Apple Silicon); `rand()` differs between C libraries (glibc, macOS), had only
   31 random bits and could return exactly 0. Uniform numbers use 53 random
   bits and bounded integers use Lemire's unbiased method.
 * `options(ForestFireR.rng = "legacy")` restores `rand()` to reproduce runs
@@ -16,8 +17,8 @@
 * Validated in distribution against the legacy generator (final native
   density near the bistability threshold and in the FGBA mapping; landscape
   pair statistics for p = 0, 0.8, 1). New tests in
-  `tests/testthat/test-rng.R`, including platform-independent reference
-  landscapes.
+  `tests/testthat/test-rng.R`, including a platform-independent check of
+  the random stream (internal `rng_draws_cpp()`).
 
 ## ForestFireR 0.7.0
 

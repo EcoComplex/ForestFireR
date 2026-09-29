@@ -3268,6 +3268,19 @@ void set_engine_cpp(bool tree) { use_tree_engine = tree; }
 // [[Rcpp::export]]
 void set_rng_cpp(bool legacy) { ffr_legacy_rng = legacy; }
 
+// Raw draws from the package generator, for tests: n uniforms on [0, 1)
+// followed by n integers on [0, 1e9), after seeding with `seed`.
+// [[Rcpp::export]]
+Rcpp::List rng_draws_cpp(int n, int seed)
+{
+    SeedRNG(seed);
+    Rcpp::NumericVector u(n);
+    Rcpp::IntegerVector k(n);
+    for (int i = 0; i < n; i++) { u[i] = ffr_unif(); }
+    for (int i = 0; i < n; i++) { k[i] = (int) ffr_randint(1000000000ULL); }
+    return Rcpp::List::create(Rcpp::Named("u") = u, Rcpp::Named("k") = k);
+}
+
 void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction,
                                  bool capture_fire_snapshots, long double fire_snapshot_min_gap)
 {

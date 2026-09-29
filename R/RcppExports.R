@@ -9,6 +9,10 @@ set_rng_cpp <- function(legacy) {
     invisible(.Call(`_ForestFireR_set_rng_cpp`, legacy))
 }
 
+rng_draws_cpp <- function(n, seed) {
+    .Call(`_ForestFireR_rng_draws_cpp`, n, seed)
+}
+
 set_seed_cpp <- function(seed) {
     invisible(.Call(`_ForestFireR_set_seed_cpp`, seed))
 }
