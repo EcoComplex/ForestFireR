@@ -41,16 +41,15 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 threshold and the invader moderately above it.}
 
 \item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
-for the invader.}
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} leaves the native species
+without a post-fire regrowth advantage; default \code{eta_inv = 0.6} gives
+the invader a moderate one.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
-\code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. \code{L_21 = 0.02}.}
+\code{\link[=default_rates]{default_rates()}} for the baseline values. Override individual entries
+to explore parameter space, e.g. \code{L_21 = 0.02}.}
 
-\item{periodic}{Use periodic boundary conditions (paper default \code{TRUE}).}
+\item{periodic}{Use periodic boundary conditions (default \code{TRUE}).}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 
@@ -106,6 +105,12 @@ reproduce runs made with ForestFireR < 0.7.0. Both select events with
 the same probabilities (and, for a given seed, the same events up to
 floating-point rounding).}
 }
+\value{
+As \code{\link[=simulate_spatial]{simulate_spatial()}}: final \code{time_sim} and densities
+\code{n0}..\code{n5}, plus \code{trajectory}, \code{initial_grid}/\code{final_grid} and the fire
+snapshots according to \code{record_dt}, \code{record_grid} and
+\code{capture_fire_snapshots}.
+}
 \description{
 Like \code{\link[=simulate_spatial]{simulate_spatial()}}, but starts from an initial grid you supply
 (typically from \code{\link[=generate_landscape_layers]{generate_landscape_layers()}}) instead of building one
@@ -119,4 +124,38 @@ patch over an all-invader domain), disable colonization/regrowth
 (\verb{L_01 = 0, L_02 = 0, eta_inv = 0}) and native-side reactions
 (irrelevant when there's no native vegetation in the initial
 condition), keeping only fire spread/burnout.
+}
+\examples{
+# Post-fire regrowth in isolation: both species scattered over an empty
+# post-fire domain, with fire and competitive replacement switched off.
+g <- generate_landscape_layers(L = 60, fill_state = FF_STATE["empty_postfire"],
+  layers = list(
+    list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
+         density = 0.05, p = 0.8),
+    list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["invader"],
+         density = 0.05, p = 0.8)
+  ), seed = 1)
+r <- simulate_spatial_from_grid(T = 300, initial_grid = g,
+                                xi_nat = 0, xi_inv = 0, Lig_23 = 0,
+                                L_12 = 0, L_21 = 0,
+                                record_dt = 10, seed = 1)
+tail(r$trajectory, 1)        # the invader's eta_inv claims the burnt ground
+
+# Fire spread in isolation: an ignition patch over an all-invader domain,
+# with no native vegetation, so the extinction stop has to be turned off.
+g2 <- generate_landscape_layers(L = 60, fill_state = FF_STATE["invader"],
+  layers = list(
+    list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],
+         density = 0.01, p = 0.8)
+  ), seed = 1)
+f <- simulate_spatial_from_grid(T = 1e-4, initial_grid = g2,
+                                xi_inv = 0.8, eta_inv = 0,
+                                L_01 = 0, L_02 = 0, L_12 = 0, L_21 = 0,
+                                Lig_23 = 0, check_extinction = FALSE,
+                                record_grid = TRUE, seed = 1)
+c(fire = f$n3, burnt = f$n5)
+}
+\seealso{
+\code{\link[=simulate_spatial]{simulate_spatial()}}, \code{\link[=generate_landscape_layers]{generate_landscape_layers()}},
+\link{ForestFireR-model}
 }

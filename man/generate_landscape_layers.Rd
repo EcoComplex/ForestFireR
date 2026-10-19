@@ -48,21 +48,25 @@ spread in relative isolation from the rest of the dynamics -- see the
 examples below.
 }
 \examples{
-\dontrun{
 # two species placed independently over a post-fire-empty domain
-g <- generate_landscape_layers(L = 100, fill_state = FF_STATE["empty_postfire"],
+g <- generate_landscape_layers(L = 60, fill_state = FF_STATE["empty_postfire"],
   layers = list(
     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
          density = 0.05, p = 0.8),
     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["invader"],
          density = 0.05, p = 0.8)
   ), seed = 1)
+table(g)
 
 # a small ignition patch over an all-invader domain
-g2 <- generate_landscape_layers(L = 100, fill_state = FF_STATE["invader"],
+g2 <- generate_landscape_layers(L = 60, fill_state = FF_STATE["invader"],
   layers = list(
     list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],
          density = 0.01, p = 0.8)
   ), seed = 1)
+table(g2)
 }
+\seealso{
+\code{\link[=simulate_spatial_from_grid]{simulate_spatial_from_grid()}}, \code{\link[=generate_landscape]{generate_landscape()}},
+\link{ForestFireR-model}
 }

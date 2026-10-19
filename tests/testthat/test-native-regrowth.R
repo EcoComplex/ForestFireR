@@ -3,7 +3,7 @@
 # eta_inv) -- see ?xi2lambda. Both channels convert through the exact same
 # formula AND the exact same reference rate, L_01 (not L_02 -- see
 # ?xi2lambda's Details), so L_01 must stay nonzero here for eta_nat/eta_inv
-# to produce any regrowth rate at all; L_01/L_02 are left at their Table 1
+# to produce any regrowth rate at all; L_01/L_02 are left at their baseline
 # defaults throughout. Ordinary colonization (L_01*(neighbor density),
 # L_02*(neighbor density)) is ALSO active from empty-postfire ground, but
 # starting every cell at empty-postfire (no natives or invaders anywhere)

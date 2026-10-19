@@ -2,22 +2,42 @@
 % Please edit documentation in R/rates.R
 \name{default_rates}
 \alias{default_rates}
-\title{Table 1 default rate constants}
+\title{Baseline rate constants}
 \usage{
 default_rates()
 }
 \value{
 A named list with the vegetation turnover rates
-(\code{L_01}, \code{L_02}, \code{L_12}, \code{L_21}), the fire persistence rate (\code{L_30},
-i.e. \eqn{\lambda^{F\emptyset}}), the invader's spontaneous ignition
-rate (\code{Lig_23}), the native's spontaneous ignition rate (\code{Lig_13}),
-and default dimensionless \code{xi_nat}, \code{xi_inv}, \code{eta_nat}, \code{eta_inv}
-(see \code{\link[=xi2lambda]{xi2lambda()}}).
+(\code{L_01}, \code{L_02}, \code{L_12}, \code{L_21}), the vegetation death rates
+(\code{L_10}, \code{L_20}, both 0), the fire burnout rate (\code{L_30},
+i.e. \eqn{\lambda^{F\emptyset}}), the two species' spontaneous ignition
+rates (\code{Lig_13}, \code{Lig_23}), and the dimensionless \code{xi_nat}, \code{xi_inv},
+\code{eta_nat}, \code{eta_inv} (see \code{\link[=xi2lambda]{xi2lambda()}}).
 }
 \description{
-Returns the baseline transition rates used throughout the paper (Table 1),
-as a named list ready to be passed to \code{\link[=simulate_spatial]{simulate_spatial()}},
-\code{\link[=simulate_mean_field]{simulate_mean_field()}} or \code{\link[=simulate_mean_field_stochastic]{simulate_mean_field_stochastic()}} via
-\code{do.call()}, or used as a starting point that individual entries can be
-overridden from.
+Returns the model's baseline parameter set as a named list, ready to be
+passed to \code{\link[=simulate_spatial]{simulate_spatial()}}, \code{\link[=simulate_mean_field]{simulate_mean_field()}} or
+\code{\link[=simulate_mean_field_stochastic]{simulate_mean_field_stochastic()}} via \code{do.call()}, or used as a starting
+point whose individual entries can be overridden. These are the values
+every simulate function uses by default. Time is in years.
+}
+\details{
+Under this parametrization the native species replaces the invader twice
+as fast as the reverse, so without fire the invader cannot spread; its
+advantages are spontaneous ignition, a higher fire-spread probability and
+post-fire regrowth. See \link{ForestFireR-model} for the mechanism and
+\code{\link[=xi2lambda]{xi2lambda()}} for the dimensionless probabilities.
+}
+\examples{
+str(default_rates())
+
+# Run with the baseline set, raising only the invader's regrowth advantage
+pars <- default_rates()
+pars$eta_inv <- 0.8
+pars[c("L_10", "L_20")] <- NULL          # not arguments of the simulate functions
+mf <- do.call(simulate_mean_field, c(list(T = 200), pars))
+tail(mf, 1)
+}
+\seealso{
+\code{\link[=xi2lambda]{xi2lambda()}}, \link{ForestFireR-model}
 }

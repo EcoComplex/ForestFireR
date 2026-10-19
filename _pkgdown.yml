@@ -2,3 +2,25 @@ url: https://EcoComplex.github.io/ForestFireR/
 
 template:
   bootstrap: 5
+
+reference:
+- title: The model
+  contents:
+  - ForestFireR-model
+  - ForestFireR
+- title: Parameters
+  contents:
+  - default_rates
+  - xi2lambda
+- title: Initial landscapes
+  contents:
+  - generate_landscape
+  - generate_landscape_layers
+  - FF_STATE
+- title: Simulation
+  contents:
+  - simulate_spatial
+  - simulate_spatial_from_grid
+  - simulate_mean_field
+  - simulate_mean_field_stochastic
+  - simulate_spatial_movie

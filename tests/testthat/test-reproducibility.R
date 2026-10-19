@@ -1,4 +1,4 @@
-# The engine seeds its own C RNG explicitly per call (see ?set_seed);
+# The engine seeds its own RNG explicitly per call;
 # the same seed and parameters must reproduce the exact same run, not
 # just similar aggregate densities. This guards against any accidental
 # reliance on ambient/global RNG state or timing-dependent seeding.

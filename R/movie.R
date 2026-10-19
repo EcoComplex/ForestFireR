@@ -24,9 +24,9 @@
 #' active rate allows) -- e.g. requesting `T = 10` sliced into 30 frames
 #' asks for one reaction roughly every `0.33` time units, but if the
 #' landscape's next actual reaction is `12` time units away (very plausible
-#' with, say, `default_rates()`'s regrowth/replacement rates, which the
-#' paper itself only shows producing visible change over `T` on the order
-#' of `100`-`300`), that one call alone jumps past `12/0.33 ~ 36` requested
+#' with, say, `default_rates()`'s regrowth/replacement rates, which produce
+#' visible change only over `T` on the order of `100`-`300` years), that one
+#' call alone jumps past `12/0.33 ~ 36` requested
 #' checkpoints at once. This function handles that correctly: whenever a
 #' call's actual elapsed time (`time_sim`) reaches or passes one or more
 #' pending checkpoints, ALL of them are filled with that call's resulting
@@ -38,8 +38,9 @@
 #' fire), never more. The practical takeaway: if you see very few distinct
 #' frames (or a `verbose` log with very few calls before reaching `T`),
 #' that's the model genuinely not doing much in `[0, T]` at these rates, not
-#' a bug -- pick a larger `T` (see [default_rates()]'s documentation and
-#' the paper for typical horizons) rather than a smaller `n_frames`.
+#' a bug -- pick a larger `T` (see [default_rates()] and
+#' [ForestFireR-model] for the timescales involved) rather than a smaller
+#' `n_frames`.
 #'
 #' Each engine call gets its own derived seed (`seed + <call index>`, when
 #' `seed` is supplied) rather than reusing one seed repeatedly, which would
@@ -102,27 +103,20 @@
 #' simulate_spatial_movie(T = 150, L = 60, n_frames = 80,
 #'                         file = "invasion.gif", seed = 1)
 #'
-#' # Fire spread, seeded directly (default L_30/Lig_23 make fire resolve
-#' # in ~1e-4 years -- invisible to any video; see the fire-spread-only
-#' # reduced-dynamics recipe in simulate_spatial_from_grid()'s docs, and
-#' # this function's Details). L_30 = 5500
-#' # here is grounded in real fire-residence-time estimates for a 30x30 m
-#' # cell (this package's own cell size), not a fitted package value --
-#' # two independent estimates converge on it: (1) understory fire
-#' # rate-of-spread in tropical forest, ~1-3 m/min, takes ~10-30 min to
-#' # cross 30 m; (2) Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764)
-#' # fit a contact-spread fire model (same mechanism as this package's
-#' # fire rule) on a 460 m/pixel Amazon grid with a fixed 1-day-per-site
-#' # fire duration; rescaling that linearly by cell-size ratio
-#' # (460/30 ~ 15x) gives ~1.6 h per 30 m cell. Both give a per-cell fire
-#' # duration on the order of 10 min-2 h, i.e. L_30 ~ 5e3-5e4/year -- far
-#' # from the package's L_30 = 1e6 default (effectively instantaneous)
-#' # but also far from the earlier ad hoc guess of L_30 = 75 (~1 week per
-#' # cell, too slow by ~2 orders of magnitude). T is rescaled down from
-#' # years to ~15 days accordingly, so the fire front is still visibly
-#' # spreading across the grid rather than resolving in a single frame or
-#' # taking years. xi_inv still sets the spread-vs-burnout probability
-#' # exactly as documented in xi2lambda() regardless of this rescaling.
+#' # Fire spread, seeded directly. The default L_30 = 1e6 resolves a fire in
+#' # ~1e-4 years, invisible to any video, so both the burnout rate and T are
+#' # rescaled here to the duration of a real fire in one cell (see the
+#' # fire-spread-only recipe in simulate_spatial_from_grid()'s examples).
+#' # L_30 = 5500/year corresponds to ~1.6 h per 30x30 m cell, which two
+#' # independent estimates support: understory fire rate-of-spread in
+#' # tropical forest, ~1-3 m/min, takes ~10-30 min to cross 30 m; and
+#' # Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764) fit a contact-spread
+#' # fire model -- the same mechanism as this package's fire rule -- on a
+#' # 460 m/pixel Amazon grid with a fixed one-day fire duration per site,
+#' # which rescales linearly by the cell-size ratio (460/30 ~ 15) to ~1.6 h.
+#' # T is rescaled to ~15 days to match, so the fire front stays visible
+#' # across frames. xi_inv still sets the spread-vs-burnout probability
+#' # exactly as documented in xi2lambda().
 #' ignite <- generate_landscape_layers(
 #'   L = 80, fill_state = FF_STATE["invader"],
 #'   layers = list(list(background = FF_STATE["invader"],
@@ -137,6 +131,7 @@
 #'                         n_frames = 150, fps = 20,
 #'                         file = "fire_spread.mp4", seed = 1)
 #' }
+#' @seealso [simulate_spatial()], [ForestFireR-model]
 #' @export
 simulate_spatial_movie <- function(T, L = 100, density2 = 0.1, p = 1,
                                     xi_nat = 0.5, xi_inv = 0.6, eta_nat = 0, eta_inv = 0.6,

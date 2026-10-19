@@ -247,9 +247,9 @@ void AllocateGrids(int newL);
 void SeedRNG(int seed);
 // check_extinction reproduces the original model's early stop once native
 // density n1 drops below 0.0001 (a sensible default when n1 starts high,
-// as in every figure the paper itself reproduces this way). It's wrong,
+// as it does for every landscape generate_landscape() builds). It's wrong,
 // though, for an initial condition built with no native vegetation at all
-// -- e.g. Figs. 10-11's fire-over-invader landscape -- where n1 is 0 from
+// -- e.g. a fire-over-invader landscape -- where n1 is 0 from
 // the very first step and the run would otherwise stop after a single
 // event. simulate_spatial_cpp always passes true (unchanged behavior);
 // simulate_spatial_from_grid_cpp lets the caller turn it off.
@@ -257,7 +257,7 @@ void SeedRNG(int seed);
 // recording block above SpatialModelSimplified_Rec's definition for why
 // this exists (periodic time-based grid capture essentially never lands
 // during an active fire, since fire spread/extinction run ~1e6x faster
-// than vegetation dynamics -- Table 1).
+// than vegetation dynamics under the baseline rates).
 void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool check_extinction = true,
                                  bool capture_fire_snapshots = false, long double fire_snapshot_min_gap = 0.001L);
 void MeanField_Rec(long double &T, long double &dt, double n1_0, double n2_0, double n3_0, double n4_0, double n5_0);
@@ -786,7 +786,7 @@ void InitialConditionNonHomogeneous(long double &density2, long double &q22, int
        // Robustness fix: the original algorithm here is unbounded random
        // rejection sampling for an "isolated" state1 site (no state2
        // neighbor). For several (density2, p) combinations well inside the
-       // paper's own stated ranges (e.g. density2=0.5, p=0.5) the pool of
+       // documented ranges (e.g. density2=0.5, p=0.5) the pool of
        // such isolated sites empties out long before the target density is
        // reached, and this loop never terminates -- confirmed to hang
        // indefinitely (not just "slow") across grid sizes L=10..100. Since
@@ -2734,19 +2734,21 @@ long double sumA=1;
         n5=N5/system_size;
         
                          
-        W[0]=N4*(L_01*N1);
+        // Pairwise reactions carry 1/system_size, first-order ones do not
+        // (same convention as MeanFieldGillespie_Rec(), see there).
+        W[0]=N4*(L_01*N1)/system_size;
         W[1]=N1*(L_10);
-        W[2]=N4*(L_02*N2);    
+        W[2]=N4*(L_02*N2)/system_size;
         W[3]=N2*(L_20);
-        W[4]=N1*(L_12*N2);
-        W[5]=N2*(L_21*N1);
-        W[6]=N1*(Lsp_13*N3+Lig_13);
-        W[7]=N2*(Lsp_23*N3+Lig_23);
+        W[4]=N1*(L_12*N2)/system_size;
+        W[5]=N2*(L_21*N1)/system_size;
+        W[6]=N1*(Lsp_13*N3/system_size+Lig_13);
+        W[7]=N2*(Lsp_23*N3/system_size+Lig_23);
         W[8]=N3*(L_30);
         W[9]=N5*(Lrg_01);
-        W[10]=N5*(Lrg_02);        
-        W[11]=N5*(L_01*N1);
-        W[12]=N5*(L_02*N2);
+        W[10]=N5*(Lrg_02);
+        W[11]=N5*(L_01*N1)/system_size;
+        W[12]=N5*(L_02*N2)/system_size;
         
         
         sumA=0;
@@ -3165,7 +3167,7 @@ static void PushRecording(long double t)
 // one capture per fire_snapshot_min_gap time units. This exists because a
 // periodic, time-based grid capture (record_grid's start/end, or a
 // hypothetical "capture every record_dt") essentially never lands during
-// an active fire: Table 1's fire-spread and fire-extinction rates are
+// an active fire: the baseline fire-spread and fire-extinction rates are
 // both ~1e6/year (hours-scale) against years-scale vegetation dynamics
 // (see check_extinction's comment above), so a single outbreak resolves
 // in a sliver of simulated time invisible to any reasonable sampling
@@ -3352,7 +3354,7 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
         };
         // BUGFIX: this loop used to run with no upper bound on k. A[][] only
         // has N rows (see AllocateGrids), so once long-double round-off
-        // accumulated in sumA/sum_aux over a long run (paper scale means
+        // accumulated in sumA/sum_aux over a long run (large grids mean
         // millions of Gillespie steps at L=100, T_max up to 5000) left
         // `random` outside every (k,j) interval actually scanned, k walked
         // past N-1 and read A[k] out of bounds -- an unmapped-heap read that
@@ -3490,7 +3492,8 @@ void SpatialModelSimplified_Rec(long double &T, long double &record_dt, bool che
 
 //=====================================================================
 // MeanField_Rec: deterministic RK4 integration of the mean-field ODEs
-// (Eq. 12 in the paper), recording the full trajectory at intervals of dt.
+// (the well-mixed limit of the master equation; see the model description
+// in ?`ForestFireR-model`), recording the full trajectory at intervals of dt.
 //=====================================================================
 //---- Slow-subsystem RHS: same equations as ForestFire() for y,z,s,l, but with
 //     the fire compartment q held FIXED (it is integrated separately, see below). ----
@@ -3511,7 +3514,7 @@ void MeanField_Rec(long double &T, long double &dt, double n1_0, double n2_0, do
     // Integrates the same mean-field equations as MeanField()/zRK4()/ForestFire(),
     // but with an IMEX (implicit-explicit) splitting instead of plain explicit RK4:
     // the fire compartment q obeys dq/dt = -k*q + c with k = L_30 - Lsp_13*y - Lsp_23*z,
-    // c = Lig_13*y + Lig_23*z. With the paper's default L_30 ~ 1e6 (fire burns out almost
+    // c = Lig_13*y + Lig_23*z. With the default L_30 ~ 1e6 (fire burns out almost
     // instantly) this term is extremely stiff and a fixed-step explicit RK4 on q alone
     // diverges to NaN for any h large enough to be computationally practical. Since the
     // ODE for q is linear given (y,z) frozen over a short step, it has a closed-form
@@ -3538,7 +3541,7 @@ void MeanField_Rec(long double &T, long double &dt, double n1_0, double n2_0, do
         } else if (k < -1e-8L) {
             // k<0 means the linearized fire term is locally growing (spread
             // outrunning extinction) -- can only happen transiently/at
-            // extreme parameter corners outside the paper's calibrated
+            // extreme parameter corners outside the documented parameter
             // range; guard against blow-up with a bounded explicit step.
             q_new = q + (c - k*q)*h;
         } else {
@@ -3603,19 +3606,27 @@ void MeanFieldGillespie_Rec(long double &T, long double &record_dt, long double 
         n0=(N4+N5)/system_size; n1=N1/system_size; n2=N2/system_size;
         n3=N3/system_size; n4=N4/system_size; n5=N5/system_size;
 
-        W[0]=N4*(L_01*N1);
+        // Propensities, in individuals per unit time. A mean-field flux
+        // lambda*n_i*n_j over N individuals is N*lambda*n_i*n_j =
+        // lambda*N_i*N_j/N, so every pairwise (mass-action) reaction carries
+        // the 1/system_size factor; first-order reactions (spontaneous
+        // ignition, fire burnout, long-range post-fire regrowth) are just
+        // lambda*N_i. Keeping both on the same footing is what makes the time
+        // axis, and the relative weight of the fire channel against vegetation
+        // turnover, agree with simulate_mean_field()'s ODE.
+        W[0]=N4*(L_01*N1)/system_size;
         W[1]=N1*(L_10);
-        W[2]=N4*(L_02*N2);
+        W[2]=N4*(L_02*N2)/system_size;
         W[3]=N2*(L_20);
-        W[4]=N1*(L_12*N2);
-        W[5]=N2*(L_21*N1);
-        W[6]=N1*(Lsp_13*N3+Lig_13);
-        W[7]=N2*(Lsp_23*N3+Lig_23);
+        W[4]=N1*(L_12*N2)/system_size;
+        W[5]=N2*(L_21*N1)/system_size;
+        W[6]=N1*(Lsp_13*N3/system_size+Lig_13);
+        W[7]=N2*(Lsp_23*N3/system_size+Lig_23);
         W[8]=N3*(L_30);
         W[9]=N5*(Lrg_01);
         W[10]=N5*(Lrg_02);
-        W[11]=N5*(L_01*N1);
-        W[12]=N5*(L_02*N2);
+        W[11]=N5*(L_01*N1)/system_size;
+        W[12]=N5*(L_02*N2)/system_size;
 
         sumA=0;
         for (int i=0;i<kr;i++){sumA=sumA+W[i];}

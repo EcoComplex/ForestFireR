@@ -42,14 +42,13 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 threshold and the invader moderately above it.}
 
 \item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
-for the invader.}
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} leaves the native species
+without a post-fire regrowth advantage; default \code{eta_inv = 0.6} gives
+the invader a moderate one.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
-\code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. \code{L_21 = 0.02}.}
+\code{\link[=default_rates]{default_rates()}} for the baseline values. Override individual entries
+to explore parameter space, e.g. \code{L_21 = 0.02}.}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 
@@ -57,14 +56,40 @@ explore parameter space, e.g. \code{L_21 = 0.02}.}
 \code{0} = every event, \verb{>0} = sample interval. Default \code{T/200}.}
 }
 \value{
-A data frame with columns \code{time}, \code{n0}..\code{n5}. Note: the CTMC can
-reach a true absorbing state (e.g. all-native with no empty sites and
-no residual ignition source) before \code{T}, in which case the trajectory
-simply stops there.
+A data frame with columns \code{time}, \code{n0}..\code{n5}.
 }
 \description{
-Runs the well-mixed Gillespie simulation (mass-action, no spatial
-structure) at a given population size \code{N}, the stochastic counterpart
-to \code{\link[=simulate_mean_field]{simulate_mean_field()}}. Useful for isolating the effect of spatial
-structure from the effect of demographic stochasticity.
+Simulates the continuous-time Markov chain of the well-mixed
+(mass-action, no spatial structure) system with \code{N} individuals, the
+stochastic counterpart of \code{\link[=simulate_mean_field]{simulate_mean_field()}}. Pairwise reactions
+have propensity \eqn{\lambda N_i N_j / N} and first-order ones
+\eqn{\lambda N_i}, so the process has the mean-field equations as its
+large-\code{N} limit. Run against \code{\link[=simulate_spatial]{simulate_spatial()}} at \eqn{N = L^2} it
+separates the effect of spatial structure from that of demographic
+stochasticity.
+}
+\details{
+Unlike the deterministic limit, where a residual burning density
+keeps the fire feedback running at all times, here fire is a discrete
+event: ignition happens at rate \eqn{\lambda^{ig} N_{inv}} and an
+outbreak usually burns out at once. The chain can also reach a true
+absorbing state before \code{T} -- all-native with no unoccupied sites and
+no ignition source, say -- in which case the trajectory stops there.
+Both are reasons a finite-\code{N} run can end somewhere the ODE does not.
+}
+\examples{
+ws <- simulate_mean_field_stochastic(T = 200, N = 10000, n1_0 = 0.9,
+                                     n2_0 = 0.05, n4_0 = 0.05, seed = 1)
+plot(ws$time, ws$n1, type = "l", col = "forestgreen", ylim = c(0, 1),
+     xlab = "time (years)", ylab = "density")
+lines(ws$time, ws$n2, col = "firebrick")
+
+# Demographic noise alone, against the deterministic limit
+mf <- simulate_mean_field(T = 200, n1_0 = 0.9, n2_0 = 0.05, n4_0 = 0.05)
+lines(mf$time, mf$n1, col = "forestgreen", lty = 2)
+lines(mf$time, mf$n2, col = "firebrick", lty = 2)
+}
+\seealso{
+\code{\link[=simulate_mean_field]{simulate_mean_field()}}, \code{\link[=simulate_spatial]{simulate_spatial()}},
+\link{ForestFireR-model}
 }

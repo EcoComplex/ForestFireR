@@ -11,10 +11,8 @@ generate_landscape(L = 100, density2 = 0.1, p = 1, seed = NULL)
 
 \item{density2}{Initial invader density, in \verb{(0, 1)}.}
 
-\item{p}{Spatial heterogeneity parameter, in \verb{[0, 2]} (0 = random,
-1 = neutral/no preference in the pairwise statistic, 2 = maximally
-segregated/clustered -- see the paper's supplementary material for
-the full derivation).}
+\item{p}{Clustering of the invader, in \verb{[0, 1]}: \code{0} scatters it over the
+grid, \code{1} aggregates it into a single compact cluster (see Details).}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 }
@@ -22,17 +20,40 @@ the full derivation).}
 An \code{L}x\code{L} integer matrix: \code{1} = native vegetation, \code{2} = invader.
 }
 \description{
-Places the invader species on a grid of natives according to the
-initial invader density and the spatial heterogeneity parameter \code{p}
-(called \eqn{p} in the paper, \code{q22} internally), following the
-pair-correlation landscape-generation algorithm described in the
-paper's supplementary material. \code{p = 0} disperses the invader uniformly
-at random; \code{p = 1} aggregates it into a single compact cluster;
-intermediate values interpolate between the two.
+Places the invader on a grid of natives at a given initial density and
+with a given degree of clustering \code{p}. The invader is grown cell by cell
+from a random seed site while the neighbour pair statistics are steered
+towards the targets set by \code{p}: writing \eqn{\rho} for the invader
+density reached so far, the targeted probabilities for a randomly chosen
+pair of adjacent sites are \eqn{\rho p} for two invader sites,
+\eqn{2\rho(1-p)} for a mixed pair and \eqn{1 + \rho(p-2)} for two
+native sites. \code{p = 0} thus asks for no invader-invader pairs at all
+(maximally dispersed) and \code{p = 1} for every neighbour of an invader site
+to be an invader (one compact cluster).
+}
+\details{
+The realised clustering increases monotonically with \code{p} but
+lags the target, because the growth process stops once the requested
+density is reached. Measured on a 100x100 grid at \code{density2 = 0.15},
+the fraction of an invader site's four neighbours that are also invader
+is about 0.00 at \code{p = 0}, 0.02 at \code{p = 0.5}, 0.50 at \code{p = 0.75} and
+0.95 at \code{p = 1}; values above \code{1} give the same configuration as
+\code{p = 1}. Compare landscapes at several \code{p} rather than reading \code{p}
+itself as the clustering.
 }
 \examples{
-\dontrun{
-g <- generate_landscape(L = 100, density2 = 0.1, p = 1, seed = 1)
-image(g)
+g <- generate_landscape(L = 60, density2 = 0.1, p = 1, seed = 1)
+table(g)                       # 1 = native, 2 = invader
+
+# the same density, scattered instead of clustered
+g0 <- generate_landscape(L = 60, density2 = 0.1, p = 0, seed = 1)
+
+op <- par(mfrow = c(1, 2), mar = c(1, 1, 2, 1))
+image(g0, col = c("forestgreen", "firebrick"), axes = FALSE, main = "p = 0")
+image(g,  col = c("forestgreen", "firebrick"), axes = FALSE, main = "p = 1")
+par(op)
 }
+\seealso{
+\code{\link[=generate_landscape_layers]{generate_landscape_layers()}}, \code{\link[=simulate_spatial]{simulate_spatial()}},
+\link{ForestFireR-model}
 }

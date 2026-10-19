@@ -1,5 +1,5 @@
 # Fire can only start via the ignition reaction (rate Lig_23 for the
-# invader, Lig_13 for the native -- currently always 0 in the paper's own
+# invader, Lig_13 for the native -- always 0 in the baseline
 # parametrization, condition iv). With both ignition rates at exactly
 # zero, fire (state 3) and post-fire empty ground (state 5) must never
 # appear anywhere in the trajectory, no matter how large the fire-spread
@@ -20,7 +20,7 @@ test_that("fire and post-fire empty ground never appear when ignition is off", {
   expect_equal(r$n5, 0)
 })
 
-test_that("Table 1's default native ignition rate (Lig_13 = 0) alone keeps fire native-free", {
+test_that("the baseline native ignition rate (Lig_13 = 0) alone keeps fire native-free", {
   # even with the invader able to ignite, native-only ignition must stay off:
   # start from an ALL-NATIVE grid (no invader anywhere) with Lig_23 active --
   # ignition should never occur, because Lig_13 (native) is 0 and there is no

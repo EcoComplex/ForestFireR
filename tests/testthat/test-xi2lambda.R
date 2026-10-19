@@ -25,7 +25,7 @@ test_that("eta2lambda is an alias of xi2lambda", {
   expect_equal(eta2lambda(0.6, 1), xi2lambda(0.6, 1))
 })
 
-test_that("default_rates() gives Table 1's baseline values", {
+test_that("default_rates() gives the baseline values", {
   r <- default_rates()
   expect_equal(r$L_01, 0.03)
   expect_equal(r$L_02, 0.03)
@@ -33,10 +33,10 @@ test_that("default_rates() gives Table 1's baseline values", {
   expect_equal(r$L_21, 0.01)
   expect_equal(r$Lig_13, 0)     # native is not fire-adapted (condition iv)
   expect_equal(r$Lig_23, 1e-4)
-  expect_equal(r$L_10, 0)       # no background mortality in the paper's model
+  expect_equal(r$L_10, 0)       # no background mortality in this model
   expect_equal(r$L_20, 0)
   expect_equal(r$xi_nat, 0.5)
   expect_equal(r$xi_inv, 0.6)
-  expect_equal(r$eta_nat, 0)    # no native post-fire regrowth advantage in the paper's model
+  expect_equal(r$eta_nat, 0)    # no native post-fire regrowth advantage in the baseline set
   expect_equal(r$eta_inv, 0.6)
 })

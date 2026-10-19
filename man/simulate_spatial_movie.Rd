@@ -36,11 +36,12 @@ simulate_spatial_movie(
 \arguments{
 \item{T}{Simulation time horizon (years).}
 
-\item{L}{Grid side length (grid has \code{L*L} sites). Runtime scales roughly
-with \code{L^2 * T}; for interactive exploration keep \code{L} around 50-100,
-reserve \code{L = 200} (paper resolution) for longer background runs (a
-single \code{L = 200}, \code{T = 100} run with default rates takes on the order
-of a couple of minutes in a typical environment).}
+\item{L}{Grid side length (grid has \code{L*L} sites). Runtime grows with the
+number of Gillespie events, roughly as \code{L^2 * T}; with the default
+sum-tree engine an \code{L = 200}, \code{T = 200} run with the baseline rates
+takes well under a second, so grid size is rarely the binding
+constraint (parameters that keep a fire burning are costlier than the
+baseline ones).}
 
 \item{density2}{Initial invader density.}
 
@@ -54,16 +55,15 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 threshold and the invader moderately above it.}
 
 \item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
-for the invader.}
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} leaves the native species
+without a post-fire regrowth advantage; default \code{eta_inv = 0.6} gives
+the invader a moderate one.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
-\code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. \code{L_21 = 0.02}.}
+\code{\link[=default_rates]{default_rates()}} for the baseline values. Override individual entries
+to explore parameter space, e.g. \code{L_21 = 0.02}.}
 
-\item{periodic}{Use periodic boundary conditions (paper default \code{TRUE}).}
+\item{periodic}{Use periodic boundary conditions (default \code{TRUE}).}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 
@@ -137,9 +137,9 @@ constants (no reaction is possible faster than the model's own smallest
 active rate allows) -- e.g. requesting \code{T = 10} sliced into 30 frames
 asks for one reaction roughly every \code{0.33} time units, but if the
 landscape's next actual reaction is \code{12} time units away (very plausible
-with, say, \code{default_rates()}'s regrowth/replacement rates, which the
-paper itself only shows producing visible change over \code{T} on the order
-of \code{100}-\code{300}), that one call alone jumps past \code{12/0.33 ~ 36} requested
+with, say, \code{default_rates()}'s regrowth/replacement rates, which produce
+visible change only over \code{T} on the order of \code{100}-\code{300} years), that one
+call alone jumps past \code{12/0.33 ~ 36} requested
 checkpoints at once. This function handles that correctly: whenever a
 call's actual elapsed time (\code{time_sim}) reaches or passes one or more
 pending checkpoints, ALL of them are filled with that call's resulting
@@ -151,8 +151,9 @@ dynamics (efficient) or up to \code{n_frames} for fast ones (e.g. an active
 fire), never more. The practical takeaway: if you see very few distinct
 frames (or a \code{verbose} log with very few calls before reaching \code{T}),
 that's the model genuinely not doing much in \verb{[0, T]} at these rates, not
-a bug -- pick a larger \code{T} (see \code{\link[=default_rates]{default_rates()}}'s documentation and
-the paper for typical horizons) rather than a smaller \code{n_frames}.
+a bug -- pick a larger \code{T} (see \code{\link[=default_rates]{default_rates()}} and
+\link{ForestFireR-model} for the timescales involved) rather than a smaller
+\code{n_frames}.
 
 Each engine call gets its own derived seed (\verb{seed + <call index>}, when
 \code{seed} is supplied) rather than reusing one seed repeatedly, which would
@@ -179,27 +180,20 @@ path <- simulate_spatial_movie(T = 150, L = 80, density2 = 0.05, p = 1,
 simulate_spatial_movie(T = 150, L = 60, n_frames = 80,
                         file = "invasion.gif", seed = 1)
 
-# Fire spread, seeded directly (default L_30/Lig_23 make fire resolve
-# in ~1e-4 years -- invisible to any video; see the fire-spread-only
-# reduced-dynamics recipe in simulate_spatial_from_grid()'s docs, and
-# this function's Details). L_30 = 5500
-# here is grounded in real fire-residence-time estimates for a 30x30 m
-# cell (this package's own cell size), not a fitted package value --
-# two independent estimates converge on it: (1) understory fire
-# rate-of-spread in tropical forest, ~1-3 m/min, takes ~10-30 min to
-# cross 30 m; (2) Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764)
-# fit a contact-spread fire model (same mechanism as this package's
-# fire rule) on a 460 m/pixel Amazon grid with a fixed 1-day-per-site
-# fire duration; rescaling that linearly by cell-size ratio
-# (460/30 ~ 15x) gives ~1.6 h per 30 m cell. Both give a per-cell fire
-# duration on the order of 10 min-2 h, i.e. L_30 ~ 5e3-5e4/year -- far
-# from the package's L_30 = 1e6 default (effectively instantaneous)
-# but also far from the earlier ad hoc guess of L_30 = 75 (~1 week per
-# cell, too slow by ~2 orders of magnitude). T is rescaled down from
-# years to ~15 days accordingly, so the fire front is still visibly
-# spreading across the grid rather than resolving in a single frame or
-# taking years. xi_inv still sets the spread-vs-burnout probability
-# exactly as documented in xi2lambda() regardless of this rescaling.
+# Fire spread, seeded directly. The default L_30 = 1e6 resolves a fire in
+# ~1e-4 years, invisible to any video, so both the burnout rate and T are
+# rescaled here to the duration of a real fire in one cell (see the
+# fire-spread-only recipe in simulate_spatial_from_grid()'s examples).
+# L_30 = 5500/year corresponds to ~1.6 h per 30x30 m cell, which two
+# independent estimates support: understory fire rate-of-spread in
+# tropical forest, ~1-3 m/min, takes ~10-30 min to cross 30 m; and
+# Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764) fit a contact-spread
+# fire model -- the same mechanism as this package's fire rule -- on a
+# 460 m/pixel Amazon grid with a fixed one-day fire duration per site,
+# which rescales linearly by the cell-size ratio (460/30 ~ 15) to ~1.6 h.
+# T is rescaled to ~15 days to match, so the fire front stays visible
+# across frames. xi_inv still sets the spread-vs-burnout probability
+# exactly as documented in xi2lambda().
 ignite <- generate_landscape_layers(
   L = 80, fill_state = FF_STATE["invader"],
   layers = list(list(background = FF_STATE["invader"],
@@ -214,4 +208,7 @@ simulate_spatial_movie(T = 0.04, initial_grid = ignite,
                         n_frames = 150, fps = 20,
                         file = "fire_spread.mp4", seed = 1)
 }
+}
+\seealso{
+\code{\link[=simulate_spatial]{simulate_spatial()}}, \link{ForestFireR-model}
 }

@@ -1,8 +1,7 @@
-# Regression guard: a past investigation (see the manuscript repo's
-# fig6_lambda_na_bug notes) found NA values appearing in simulation
-# output under some parameter combinations. This is not about a specific
+# Regression guard: NA values were once found in simulation output under
+# some parameter combinations. This is not about a specific
 # known numeric result, but it IS a known a priori property that must
-# always hold: under Table 1's own published default rates, output
+# always hold: under the baseline default rates, output
 # densities must be finite, non-negative, sum to 1, and time_sim must
 # never exceed the requested horizon by more than a single Gillespie
 # step's worth of slack. Any NA/NaN/negative value here is a real defect.
@@ -17,7 +16,7 @@ expect_well_formed <- function(df, tol = 1e-6) {
   expect_true(all(abs(total - 1) < 1e-4))
 }
 
-test_that("spatial model produces well-formed output under Table 1 defaults", {
+test_that("spatial model produces well-formed output under the baseline rates", {
   # default_rates() also carries L_10/L_20 (always 0, not exposed as
   # simulate_*() arguments -- the model has no background mortality term,
   # see ?default_rates), so drop them before forwarding the rest via do.call.
@@ -32,7 +31,7 @@ test_that("spatial model produces well-formed output under Table 1 defaults", {
   }
 })
 
-test_that("mean-field model produces well-formed output under Table 1 defaults", {
+test_that("mean-field model produces well-formed output under the baseline rates", {
   rates <- default_rates()
   rates$L_10 <- NULL
   rates$L_20 <- NULL
@@ -41,7 +40,7 @@ test_that("mean-field model produces well-formed output under Table 1 defaults",
   expect_well_formed(mf)
 })
 
-test_that("well-mixed stochastic model produces well-formed output under Table 1 defaults", {
+test_that("well-mixed stochastic model produces well-formed output under the baseline rates", {
   rates <- default_rates()
   rates$L_10 <- NULL
   rates$L_20 <- NULL

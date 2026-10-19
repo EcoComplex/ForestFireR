@@ -1,21 +1,28 @@
 Package: ForestFireR
 Type: Package
 Title: Spatial and Mean-Field Forest-Fire Invasion Model
-Version: 0.8.0
-Author: Leonardo A. Saravia, Rebeca de la Fuente
-Maintainer: Leonardo A. Saravia <lasaravia@untdf.edu.ar>
-Description: R/Rcpp interface to a spatial stochastic (Gillespie) and
-    deterministic mean-field model of fire-driven biological invasion in a
-    two-species, fire-vegetation system. Provides R-friendly functions,
-    using a compact dimensionless notation (xi, eta, p) for fire spread,
-    post-fire regrowth and spatial heterogeneity, to generate initial
-    landscapes and run spatially-explicit or well-mixed simulations with
-    full trajectory/snapshot recording, dynamic grid sizing, reproducible
-    RNG seeding, and a numerically stable mean-field integrator. The model
-    is described in de la Fuente & Saravia, "Dynamics of invasion in
-    forest-fire models" -- see the README for citation details.
+Version: 0.9.0
+Authors@R: c(
+    person("Leonardo A.", "Saravia", email = "lasaravia@untdf.edu.ar",
+           role = c("aut", "cre")),
+    person("Rebeca", "de la Fuente", role = "aut"))
+Description: Simulation of a two-species vegetation system in which fire
+    mediates the competition between a native species and an invader.
+    The same continuous-time transition rules are simulated on an explicit
+    lattice with the Gillespie algorithm, as the deterministic well-mixed
+    (mean-field) limit, and as the well-mixed stochastic process at a finite
+    population size. Fire spread, post-fire regrowth and the clustering of
+    the initial landscape are set through dimensionless parameters
+    ('xi', 'eta', 'p'); landscape generators, trajectory and grid recording,
+    fire-activity snapshots, animation rendering and reproducible seeding
+    are provided. The simulation engine is written in C++ and exposed to R
+    through 'Rcpp'. The model definition is documented in the package, under
+    help("ForestFireR-model").
 License: GPL-3
 Encoding: UTF-8
+URL: https://github.com/EcoComplex/ForestFireR,
+    https://EcoComplex.github.io/ForestFireR/
+BugReports: https://github.com/EcoComplex/ForestFireR/issues
 Imports: Rcpp
 LinkingTo: Rcpp
 Suggests: av, gifski, testthat (>= 3.0.0)

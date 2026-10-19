@@ -3,7 +3,7 @@
 \name{xi2lambda}
 \alias{xi2lambda}
 \alias{eta2lambda}
-\title{Convert a spread/regrowth probability to a rate constant}
+\title{Convert a spread or regrowth probability to a rate constant}
 \usage{
 xi2lambda(xi, lambda_ref)
 
@@ -15,19 +15,19 @@ regrowth -- both use this same formula).}
 
 \item{lambda_ref}{The reference rate the probability is defined against
 (\code{L_30}, i.e. \eqn{\lambda^{F\emptyset}}, for fire spread; \code{L_01},
-i.e. \eqn{\lambda_{\emptyset V1}}, for regrowth -- see Details).}
+i.e. \eqn{\lambda_{\emptyset nat}}, for regrowth -- see Details).}
 }
 \value{
 The corresponding rate constant (same units as \code{lambda_ref}).
 }
 \description{
-The paper parametrizes fire spread and post-fire regrowth with two
-dimensionless probabilities, \eqn{\xi} (probability that a burning
+The model parametrizes fire spread and post-fire regrowth with two
+dimensionless probabilities: \eqn{\xi}, the probability that a burning
 neighbour ignites a given vegetation type before the fire itself burns
-out) and \eqn{\eta} (probability that an empty-after-fire site regrows
-into the invader before it is recolonised some other way). Both convert
-to a rate constant through the same relation, derived from setting
-\eqn{\xi = \lambda^{sp}/(\lambda^{sp}+\lambda^{F\emptyset})} (and
+out, and \eqn{\eta}, the probability that an unoccupied post-fire site
+regrows into a given species before it is recolonised some other way.
+Both convert to a rate constant through the same relation, obtained by
+setting \eqn{\xi = \lambda^{sp}/(\lambda^{sp}+\lambda^{F\emptyset})} (and
 analogously for \eqn{\eta}) and solving for the rate:
 \deqn{\lambda = \frac{\xi}{1-\xi}\,\lambda_{ref}}
 }
@@ -35,12 +35,35 @@ analogously for \eqn{\eta}) and solving for the rate:
 Fire spread: \code{xi2lambda(xi_nat, L_30)} gives \code{Lsp_13} (native
 catches fire from a burning neighbour), \code{xi2lambda(xi_inv, L_30)} gives
 \code{Lsp_23} (invader catches fire from a burning neighbour).
+\eqn{\xi = 0.5} is the point where spread and burnout are equally fast:
+below it a fire usually dies where it started, above it a fire usually
+propagates.
 
 Regrowth: both species' post-fire regrowth probabilities convert the
 same way, using \code{L_01} (not \code{L_02}) as the reference rate for both:
 \code{eta2lambda(eta_nat, L_01)} gives \code{Lrg_01} (native long-range
 regrowth), \code{eta2lambda(eta_inv, L_01)} gives \code{Lrg_02} (invader
-long-range regrowth). The paper's own parametrization sets
-\code{eta_nat = 0} (native has no post-fire regrowth advantage); \code{eta_nat}
-exists so the model can be used symmetrically for other systems.
+long-range regrowth). Setting \code{L_01 = 0} therefore switches off both
+regrowth channels as well as ordinary native colonisation.
+
+The baseline parameter set leaves the native species without a regrowth
+advantage (\code{eta_nat = 0}); \code{eta_nat} exists so the two species can be
+parametrized symmetrically.
+}
+\examples{
+# A fire-spread probability of 0.6 against a burnout rate of 1e6/year
+xi2lambda(0.6, 1e6)
+
+# xi = 0.5 returns exactly the reference rate (spread as fast as burnout)
+xi2lambda(0.5, 1e6)
+
+# Regrowth uses L_01 as its reference rate
+eta2lambda(0.6, 0.03)
+
+# The conversion is what the simulate functions apply internally
+r <- default_rates()
+xi2lambda(r$xi_inv, r$L_30)
+}
+\seealso{
+\code{\link[=default_rates]{default_rates()}}, \link{ForestFireR-model}
 }

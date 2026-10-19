@@ -32,11 +32,12 @@ simulate_spatial(
 \arguments{
 \item{T}{Simulation time horizon (years).}
 
-\item{L}{Grid side length (grid has \code{L*L} sites). Runtime scales roughly
-with \code{L^2 * T}; for interactive exploration keep \code{L} around 50-100,
-reserve \code{L = 200} (paper resolution) for longer background runs (a
-single \code{L = 200}, \code{T = 100} run with default rates takes on the order
-of a couple of minutes in a typical environment).}
+\item{L}{Grid side length (grid has \code{L*L} sites). Runtime grows with the
+number of Gillespie events, roughly as \code{L^2 * T}; with the default
+sum-tree engine an \code{L = 200}, \code{T = 200} run with the baseline rates
+takes well under a second, so grid size is rarely the binding
+constraint (parameters that keep a fire burning are costlier than the
+baseline ones).}
 
 \item{density2}{Initial invader density.}
 
@@ -50,16 +51,15 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 threshold and the invader moderately above it.}
 
 \item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
-for the invader.}
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} leaves the native species
+without a post-fire regrowth advantage; default \code{eta_inv = 0.6} gives
+the invader a moderate one.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
-\code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. \code{L_21 = 0.02}.}
+\code{\link[=default_rates]{default_rates()}} for the baseline values. Override individual entries
+to explore parameter space, e.g. \code{L_21 = 0.02}.}
 
-\item{periodic}{Use periodic boundary conditions (paper default \code{TRUE}).}
+\item{periodic}{Use periodic boundary conditions (default \code{TRUE}).}
 
 \item{seed}{Integer RNG seed, or \code{NULL} for a fresh, non-reproducible seed.}
 
@@ -115,16 +115,32 @@ numeric vector) / \code{fire_snapshot_grids} (a list of \code{L}x\code{L} intege
 matrices, same length and order) if \code{capture_fire_snapshots = TRUE}.
 }
 \description{
-Runs the model's Gillespie stochastic simulation algorithm on an \code{L}x\code{L}
-periodic (or bounded) grid, starting from an invader landscape generated
-the same way as \code{\link[=generate_landscape]{generate_landscape()}}. This is the direct R-friendly
-interface to the model's continuous-time Markov chain (master equation)
-spatial dynamics, as described in the paper.
+Simulates the lattice continuous-time Markov chain exactly, with the
+Gillespie algorithm, on an \code{L}x\code{L} periodic (or bounded) grid, starting
+from an invader landscape generated the same way as
+\code{\link[=generate_landscape]{generate_landscape()}}. See \link{ForestFireR-model} for the transition rules
+and parameters.
 }
 \examples{
-\dontrun{
-r <- simulate_spatial(T = 20, L = 60, density2 = 0.05, p = 1,
-                       xi_inv = 0.6, eta_inv = 0.6, record_dt = 0.5)
-plot(r$trajectory$time, r$trajectory$n1, type = "l")
+# Invasion trajectory on a 80x80 grid over 150 years
+r <- simulate_spatial(T = 150, L = 80, density2 = 0.05, p = 1,
+                      xi_inv = 0.6, eta_inv = 0.6,
+                      record_dt = 1, seed = 1)
+plot(r$trajectory$time, r$trajectory$n1, type = "l", col = "forestgreen",
+     ylim = c(0, 1), xlab = "time (years)", ylab = "density")
+lines(r$trajectory$time, r$trajectory$n2, col = "firebrick")
+legend("right", c("native", "invader"), lty = 1, bty = "n",
+       col = c("forestgreen", "firebrick"))
+
+# Final densities only -- the fast option for parameter sweeps
+simulate_spatial(T = 150, L = 80, seed = 1)[c("n1", "n2", "n5")]
+
+# Initial and final grids
+g <- simulate_spatial(T = 150, L = 80, record_grid = TRUE, seed = 1)
+image(g$final_grid, col = c("forestgreen", "firebrick", "orange",
+                            "grey90", "grey60"), axes = FALSE)
 }
+\seealso{
+\code{\link[=simulate_spatial_from_grid]{simulate_spatial_from_grid()}}, \code{\link[=simulate_mean_field]{simulate_mean_field()}},
+\link{ForestFireR-model}
 }

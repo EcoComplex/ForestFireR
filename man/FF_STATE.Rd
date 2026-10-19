@@ -9,13 +9,21 @@ FF_STATE
 \description{
 The integer codes used in the \code{L}x\code{L} grids returned/accepted by
 \code{\link[=generate_landscape]{generate_landscape()}}, \code{\link[=generate_landscape_layers]{generate_landscape_layers()}} and
-\code{\link[=simulate_spatial_from_grid]{simulate_spatial_from_grid()}}: \code{1} = native vegetation (paper's
-\eqn{V^{nat}}), \code{2} = invader vegetation (\eqn{V^{inv}}), \code{3} = active
+\code{\link[=simulate_spatial_from_grid]{simulate_spatial_from_grid()}}: \code{1} = native vegetation
+(\eqn{V^{nat}}), \code{2} = invader vegetation (\eqn{V^{inv}}), \code{3} = active
 fire (\eqn{F}), \code{4} = unoccupied, never-yet-burned space
 (\eqn{\emptyset}), \code{5} = unoccupied, post-fire space (\eqn{\emptyset^F},
-the only one of the two empty states with a long-range regrowth channel,
-via \code{eta_nat}/\code{eta_inv}; the paper's own parametrization sets
+the only one of the two unoccupied states with a long-range regrowth
+channel, via \code{eta_nat}/\code{eta_inv}; the baseline parametrization sets
 \code{eta_nat = 0}, leaving only the invader with a regrowth advantage
 there). State \code{0} never appears -- it's an unused index in the
 underlying engine's state numbering.
+}
+\examples{
+FF_STATE
+g <- generate_landscape(L = 40, density2 = 0.1, p = 1, seed = 1)
+sum(g == FF_STATE["invader"]) / length(g)
+}
+\seealso{
+\link{ForestFireR-model}
 }

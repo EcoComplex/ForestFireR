@@ -39,14 +39,13 @@ threshold (see \code{\link[=xi2lambda]{xi2lambda()}}'s Details); the defaults he
 threshold and the invader moderately above it.}
 
 \item{eta_nat, eta_inv}{Native/invader post-fire regrowth probabilities
-(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-\code{eta_inv = 0.6} represents a moderate post-fire regrowth advantage
-for the invader.}
+(see \code{\link[=xi2lambda]{xi2lambda()}}). Default \code{eta_nat = 0} leaves the native species
+without a post-fire regrowth advantage; default \code{eta_inv = 0.6} gives
+the invader a moderate one.}
 
 \item{L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23}{Base rate constants; see
-\code{\link[=default_rates]{default_rates()}} for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. \code{L_21 = 0.02}.}
+\code{\link[=default_rates]{default_rates()}} for the baseline values. Override individual entries
+to explore parameter space, e.g. \code{L_21 = 0.02}.}
 
 \item{record_dt}{Trajectory sampling interval (must be \verb{> 0}; default
 \code{T/200}).}
@@ -56,20 +55,28 @@ A data frame with columns \code{time}, \code{n0}..\code{n5}.
 }
 \description{
 Integrates the mean-field ODE system describing the well-mixed limit of
-the model (see the paper's mean-field derivation for the full
-equations), and returns the full trajectory as a
-data frame. Internally uses a semi-implicit (IMEX) step for the fire
-compartment so that it stays numerically stable even under the paper's
-default \code{L_30 = 1e6} (an explicit fixed-step RK4 on this term alone
-diverges for any practical step size) -- see the package's implementation
-notes (\code{vignette("forest-fire-model")} or \code{NEWS.md}) for details. The
-underlying vegetation/fire equations are unchanged from the original
-model.
+the model and returns the full trajectory as a data frame. The equations
+are written out in \link{ForestFireR-model}. The fire compartment is advanced
+with its exact linear solution over each step while the vegetation block
+is integrated with classic RK4, which keeps the integration stable at the
+default \code{L_30 = 1e6} (an explicit fixed-step RK4 on the fire term alone
+diverges for any practical step size).
 }
 \examples{
-\dontrun{
 mf <- simulate_mean_field(T = 200, n1_0 = 0.9, n2_0 = 0.05, n4_0 = 0.05)
-plot(mf$time, mf$n1, type = "l", ylim = c(0,1))
-lines(mf$time, mf$n2, col = "red")
+plot(mf$time, mf$n1, type = "l", col = "forestgreen", ylim = c(0, 1),
+     xlab = "time (years)", ylab = "density")
+lines(mf$time, mf$n2, col = "firebrick")
+
+# Without the invader's post-fire regrowth advantage the invasion fails
+mf0 <- simulate_mean_field(T = 200, n1_0 = 0.9, n2_0 = 0.05, n4_0 = 0.05,
+                           eta_inv = 0)
+tail(mf0, 1)
+
+# Residual burning density sustaining the feedback (see ForestFireR-model)
+range(mf$n3)
 }
+\seealso{
+\code{\link[=simulate_mean_field_stochastic]{simulate_mean_field_stochastic()}}, \code{\link[=simulate_spatial]{simulate_spatial()}},
+\link{ForestFireR-model}
 }
