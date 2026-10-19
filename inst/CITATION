@@ -1,0 +1,21 @@
+citHeader("To cite ForestFireR in publications, cite the package and the article describing the model:")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "ForestFireR: Spatial and Mean-Field Forest-Fire Invasion Model",
+  author   = c(person("Leonardo A.", "Saravia"),
+               person("Rebeca", "de la Fuente")),
+  year     = "2026",
+  note     = "R package version 0.9.0",
+  url      = "https://github.com/EcoComplex/ForestFireR"
+)
+
+bibentry(
+  bibtype  = "Unpublished",
+  title    = "Dynamics of invasion in forest-fire models",
+  author   = c(person("Leonardo A.", "Saravia"),
+               person("Rebeca", "de la Fuente")),
+  year     = "2026",
+  note     = "Manuscript",
+  url      = "https://github.com/EcoComplex/InvasionForestFires"
+)
