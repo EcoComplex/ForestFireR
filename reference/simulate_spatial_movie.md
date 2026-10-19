@@ -49,11 +49,12 @@ simulate_spatial_movie(
 
 - L:
 
-  Grid side length (grid has `L*L` sites). Runtime scales roughly with
-  `L^2 * T`; for interactive exploration keep `L` around 50-100, reserve
-  `L = 200` (paper resolution) for longer background runs (a single
-  `L = 200`, `T = 100` run with default rates takes on the order of a
-  couple of minutes in a typical environment).
+  Grid side length (grid has `L*L` sites). Runtime grows with the number
+  of Gillespie events, roughly as `L^2 * T`; with the default sum-tree
+  engine an `L = 200`, `T = 200` run with the baseline rates takes well
+  under a second, so grid size is rarely the binding constraint
+  (parameters that keep a fire burning are costlier than the baseline
+  ones).
 
 - density2:
 
@@ -78,20 +79,20 @@ simulate_spatial_movie(
 
   Native/invader post-fire regrowth probabilities (see
   [`xi2lambda()`](https://EcoComplex.github.io/ForestFireR/reference/xi2lambda.md)).
-  Default `eta_nat = 0` matches the paper's own parametrization (no
-  native post-fire regrowth advantage); default `eta_inv = 0.6`
-  represents a moderate post-fire regrowth advantage for the invader.
+  Default `eta_nat = 0` leaves the native species without a post-fire
+  regrowth advantage; default `eta_inv = 0.6` gives the invader a
+  moderate one.
 
 - L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23:
 
   Base rate constants; see
   [`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)
-  for Table 1 defaults. Override individual entries to explore parameter
-  space, e.g. `L_21 = 0.02`.
+  for the baseline values. Override individual entries to explore
+  parameter space, e.g. `L_21 = 0.02`.
 
 - periodic:
 
-  Use periodic boundary conditions (paper default `TRUE`).
+  Use periodic boundary conditions (default `TRUE`).
 
 - seed:
 
@@ -185,24 +186,24 @@ asks for one reaction roughly every `0.33` time units, but if the
 landscape's next actual reaction is `12` time units away (very plausible
 with, say,
 [`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)'s
-regrowth/replacement rates, which the paper itself only shows producing
-visible change over `T` on the order of `100`-`300`), that one call
-alone jumps past `12/0.33 ~ 36` requested checkpoints at once. This
-function handles that correctly: whenever a call's actual elapsed time
-(`time_sim`) reaches or passes one or more pending checkpoints, ALL of
-them are filled with that call's resulting grid (correctly showing no
-change happened yet), and the next call starts from the next
-still-unfilled checkpoint – so the total number of engine calls actually
-made is bounded by the number of *real* reactions needed to cover
-`[0, T]`, which can be far fewer than `n_frames` for slow dynamics
-(efficient) or up to `n_frames` for fast ones (e.g. an active fire),
-never more. The practical takeaway: if you see very few distinct frames
-(or a `verbose` log with very few calls before reaching `T`), that's the
-model genuinely not doing much in `[0, T]` at these rates, not a bug –
-pick a larger `T` (see
-[`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)'s
-documentation and the paper for typical horizons) rather than a smaller
-`n_frames`.
+regrowth/replacement rates, which produce visible change only over `T`
+on the order of `100`-`300` years), that one call alone jumps past
+`12/0.33 ~ 36` requested checkpoints at once. This function handles that
+correctly: whenever a call's actual elapsed time (`time_sim`) reaches or
+passes one or more pending checkpoints, ALL of them are filled with that
+call's resulting grid (correctly showing no change happened yet), and
+the next call starts from the next still-unfilled checkpoint – so the
+total number of engine calls actually made is bounded by the number of
+*real* reactions needed to cover `[0, T]`, which can be far fewer than
+`n_frames` for slow dynamics (efficient) or up to `n_frames` for fast
+ones (e.g. an active fire), never more. The practical takeaway: if you
+see very few distinct frames (or a `verbose` log with very few calls
+before reaching `T`), that's the model genuinely not doing much in
+`[0, T]` at these rates, not a bug – pick a larger `T` (see
+[`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)
+and
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
+for the timescales involved) rather than a smaller `n_frames`.
 
 Each engine call gets its own derived seed (`seed + <call index>`, when
 `seed` is supplied) rather than reusing one seed repeatedly, which would
@@ -216,6 +217,11 @@ own `check_extinction` early stop, all remaining checkpoints are filled
 with that final grid, so the rendered video still runs the full
 requested length, ending on a frozen final state, instead of silently
 being shorter than asked.
+
+## See also
+
+[`simulate_spatial()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_spatial.md),
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
 
 ## Examples
 
@@ -232,27 +238,20 @@ path <- simulate_spatial_movie(T = 150, L = 80, density2 = 0.05, p = 1,
 simulate_spatial_movie(T = 150, L = 60, n_frames = 80,
                         file = "invasion.gif", seed = 1)
 
-# Fire spread, seeded directly (default L_30/Lig_23 make fire resolve
-# in ~1e-4 years -- invisible to any video; see the fire-spread-only
-# reduced-dynamics recipe in simulate_spatial_from_grid()'s docs, and
-# this function's Details). L_30 = 5500
-# here is grounded in real fire-residence-time estimates for a 30x30 m
-# cell (this package's own cell size), not a fitted package value --
-# two independent estimates converge on it: (1) understory fire
-# rate-of-spread in tropical forest, ~1-3 m/min, takes ~10-30 min to
-# cross 30 m; (2) Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764)
-# fit a contact-spread fire model (same mechanism as this package's
-# fire rule) on a 460 m/pixel Amazon grid with a fixed 1-day-per-site
-# fire duration; rescaling that linearly by cell-size ratio
-# (460/30 ~ 15x) gives ~1.6 h per 30 m cell. Both give a per-cell fire
-# duration on the order of 10 min-2 h, i.e. L_30 ~ 5e3-5e4/year -- far
-# from the package's L_30 = 1e6 default (effectively instantaneous)
-# but also far from the earlier ad hoc guess of L_30 = 75 (~1 week per
-# cell, too slow by ~2 orders of magnitude). T is rescaled down from
-# years to ~15 days accordingly, so the fire front is still visibly
-# spreading across the grid rather than resolving in a single frame or
-# taking years. xi_inv still sets the spread-vs-burnout probability
-# exactly as documented in xi2lambda() regardless of this rescaling.
+# Fire spread, seeded directly. The default L_30 = 1e6 resolves a fire in
+# ~1e-4 years, invisible to any video, so both the burnout rate and T are
+# rescaled here to the duration of a real fire in one cell (see the
+# fire-spread-only recipe in simulate_spatial_from_grid()'s examples).
+# L_30 = 5500/year corresponds to ~1.6 h per 30x30 m cell, which two
+# independent estimates support: understory fire rate-of-spread in
+# tropical forest, ~1-3 m/min, takes ~10-30 min to cross 30 m; and
+# Saravia et al. 2025 (Oikos, doi:10.1111/oik.10764) fit a contact-spread
+# fire model -- the same mechanism as this package's fire rule -- on a
+# 460 m/pixel Amazon grid with a fixed one-day fire duration per site,
+# which rescales linearly by the cell-size ratio (460/30 ~ 15) to ~1.6 h.
+# T is rescaled to ~15 days to match, so the fire front stays visible
+# across frames. xi_inv still sets the spread-vs-burnout probability
+# exactly as documented in xi2lambda().
 ignite <- generate_landscape_layers(
   L = 80, fill_state = FF_STATE["invader"],
   layers = list(list(background = FF_STATE["invader"],

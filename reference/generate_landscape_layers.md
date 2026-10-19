@@ -64,24 +64,36 @@ over an all-invader domain), for studying post-fire regrowth or fire
 spread in relative isolation from the rest of the dynamics – see the
 examples below.
 
+## See also
+
+[`simulate_spatial_from_grid()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_spatial_from_grid.md),
+[`generate_landscape()`](https://EcoComplex.github.io/ForestFireR/reference/generate_landscape.md),
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
+
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 # two species placed independently over a post-fire-empty domain
-g <- generate_landscape_layers(L = 100, fill_state = FF_STATE["empty_postfire"],
+g <- generate_landscape_layers(L = 60, fill_state = FF_STATE["empty_postfire"],
   layers = list(
     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
          density = 0.05, p = 0.8),
     list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["invader"],
          density = 0.05, p = 0.8)
   ), seed = 1)
+table(g)
+#> g
+#>    1    2    5 
+#>  180  180 3240 
 
 # a small ignition patch over an all-invader domain
-g2 <- generate_landscape_layers(L = 100, fill_state = FF_STATE["invader"],
+g2 <- generate_landscape_layers(L = 60, fill_state = FF_STATE["invader"],
   layers = list(
     list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],
          density = 0.01, p = 0.8)
   ), seed = 1)
-} # }
+table(g2)
+#> g2
+#>    2    3 
+#> 3564   36 
 ```

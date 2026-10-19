@@ -1,12 +1,12 @@
 # Simulate the spatially-explicit stochastic model
 
-Runs the model's Gillespie stochastic simulation algorithm on an `L`x`L`
-periodic (or bounded) grid, starting from an invader landscape generated
-the same way as
+Simulates the lattice continuous-time Markov chain exactly, with the
+Gillespie algorithm, on an `L`x`L` periodic (or bounded) grid, starting
+from an invader landscape generated the same way as
 [`generate_landscape()`](https://EcoComplex.github.io/ForestFireR/reference/generate_landscape.md).
-This is the direct R-friendly interface to the model's continuous-time
-Markov chain (master equation) spatial dynamics, as described in the
-paper.
+See
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
+for the transition rules and parameters.
 
 ## Usage
 
@@ -45,11 +45,12 @@ simulate_spatial(
 
 - L:
 
-  Grid side length (grid has `L*L` sites). Runtime scales roughly with
-  `L^2 * T`; for interactive exploration keep `L` around 50-100, reserve
-  `L = 200` (paper resolution) for longer background runs (a single
-  `L = 200`, `T = 100` run with default rates takes on the order of a
-  couple of minutes in a typical environment).
+  Grid side length (grid has `L*L` sites). Runtime grows with the number
+  of Gillespie events, roughly as `L^2 * T`; with the default sum-tree
+  engine an `L = 200`, `T = 200` run with the baseline rates takes well
+  under a second, so grid size is rarely the binding constraint
+  (parameters that keep a fire burning are costlier than the baseline
+  ones).
 
 - density2:
 
@@ -74,20 +75,20 @@ simulate_spatial(
 
   Native/invader post-fire regrowth probabilities (see
   [`xi2lambda()`](https://EcoComplex.github.io/ForestFireR/reference/xi2lambda.md)).
-  Default `eta_nat = 0` matches the paper's own parametrization (no
-  native post-fire regrowth advantage); default `eta_inv = 0.6`
-  represents a moderate post-fire regrowth advantage for the invader.
+  Default `eta_nat = 0` leaves the native species without a post-fire
+  regrowth advantage; default `eta_inv = 0.6` gives the invader a
+  moderate one.
 
 - L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23:
 
   Base rate constants; see
   [`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)
-  for Table 1 defaults. Override individual entries to explore parameter
-  space, e.g. `L_21 = 0.02`.
+  for the baseline values. Override individual entries to explore
+  parameter space, e.g. `L_21 = 0.02`.
 
 - periodic:
 
-  Use periodic boundary conditions (paper default `TRUE`).
+  Use periodic boundary conditions (default `TRUE`).
 
 - seed:
 
@@ -155,12 +156,40 @@ empty-after-vegetation-death, `n5` = empty-after-fire), plus
 numeric vector) / `fire_snapshot_grids` (a list of `L`x`L` integer
 matrices, same length and order) if `capture_fire_snapshots = TRUE`.
 
+## See also
+
+[`simulate_spatial_from_grid()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_spatial_from_grid.md),
+[`simulate_mean_field()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_mean_field.md),
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
+
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-r <- simulate_spatial(T = 20, L = 60, density2 = 0.05, p = 1,
-                       xi_inv = 0.6, eta_inv = 0.6, record_dt = 0.5)
-plot(r$trajectory$time, r$trajectory$n1, type = "l")
-} # }
+# Invasion trajectory on a 80x80 grid over 150 years
+r <- simulate_spatial(T = 150, L = 80, density2 = 0.05, p = 1,
+                      xi_inv = 0.6, eta_inv = 0.6,
+                      record_dt = 1, seed = 1)
+plot(r$trajectory$time, r$trajectory$n1, type = "l", col = "forestgreen",
+     ylim = c(0, 1), xlab = "time (years)", ylab = "density")
+lines(r$trajectory$time, r$trajectory$n2, col = "firebrick")
+legend("right", c("native", "invader"), lty = 1, bty = "n",
+       col = c("forestgreen", "firebrick"))
+
+
+# Final densities only -- the fast option for parameter sweeps
+simulate_spatial(T = 150, L = 80, seed = 1)[c("n1", "n2", "n5")]
+#> $n1
+#> [1] 0.0590625
+#> 
+#> $n2
+#> [1] 0.7575
+#> 
+#> $n5
+#> [1] 0.1832813
+#> 
+
+# Initial and final grids
+g <- simulate_spatial(T = 150, L = 80, record_grid = TRUE, seed = 1)
+image(g$final_grid, col = c("forestgreen", "firebrick", "orange",
+                            "grey90", "grey60"), axes = FALSE)
 ```

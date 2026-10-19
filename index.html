@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Spatial and Mean-Field Forest-Fire Invasion Model">
-<meta name="description" content='R/Rcpp interface to a spatial stochastic (Gillespie) and deterministic mean-field model of fire-driven biological invasion in a two-species, fire-vegetation system. Provides R-friendly functions, using a compact dimensionless notation (xi, eta, p) for fire spread, post-fire regrowth and spatial heterogeneity, to generate initial landscapes and run spatially-explicit or well-mixed simulations with full trajectory/snapshot recording, dynamic grid sizing, reproducible RNG seeding, and a numerically stable mean-field integrator. The model is described in de la Fuente &amp; Saravia, "Dynamics of invasion in forest-fire models" -- see the README for citation details.'>
-<meta property="og:description" content='R/Rcpp interface to a spatial stochastic (Gillespie) and deterministic mean-field model of fire-driven biological invasion in a two-species, fire-vegetation system. Provides R-friendly functions, using a compact dimensionless notation (xi, eta, p) for fire spread, post-fire regrowth and spatial heterogeneity, to generate initial landscapes and run spatially-explicit or well-mixed simulations with full trajectory/snapshot recording, dynamic grid sizing, reproducible RNG seeding, and a numerically stable mean-field integrator. The model is described in de la Fuente &amp; Saravia, "Dynamics of invasion in forest-fire models" -- see the README for citation details.'>
+<meta name="description" content='Simulation of a two-species vegetation system in which fire mediates the competition between a native species and an invader. The same continuous-time transition rules are simulated on an explicit lattice with the Gillespie algorithm, as the deterministic well-mixed (mean-field) limit, and as the well-mixed stochastic process at a finite population size. Fire spread, post-fire regrowth and the clustering of the initial landscape are set through dimensionless parameters (xi, eta, p); landscape generators, trajectory and grid recording, fire-activity snapshots, animation rendering and reproducible seeding are provided. The simulation engine is written in C++ and exposed to R through Rcpp. The model definition is documented in the package, under help("ForestFireR-model").'>
+<meta property="og:description" content='Simulation of a two-species vegetation system in which fire mediates the competition between a native species and an invader. The same continuous-time transition rules are simulated on an explicit lattice with the Gillespie algorithm, as the deterministic well-mixed (mean-field) limit, and as the well-mixed stochastic process at a finite population size. Fire spread, post-fire regrowth and the clustering of the initial landscape are set through dimensionless parameters (xi, eta, p); landscape generators, trajectory and grid recording, fire-activity snapshots, animation rendering and reproducible seeding are provided. The simulation engine is written in C++ and exposed to R through Rcpp. The model definition is documented in the package, under help("ForestFireR-model").'>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ForestFireR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/EcoComplex/ForestFireR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -48,101 +49,205 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="forestfirer">ForestFireR<a class="anchor" aria-label="anchor" href="#forestfirer"></a>
 </h1></div>
-<p>R package implementing the forest-fire invasion model from <em>“Dynamics of invasion in forest-fire models”</em>: a spatial stochastic (Gillespie) and deterministic mean-field model of fire-driven biological invasion in a two-species, fire-vegetation system. The simulation engine is written in C++ and exposed to R through Rcpp, with an R-friendly interface built around a compact dimensionless notation (<code>xi</code>, <code>eta</code>, <code>p</code>) for fire spread, post-fire regrowth and spatial heterogeneity.</p>
+<p>R package simulating a two-species vegetation system in which fire mediates the competition between a native species and an invader. The same continuous-time transition rules are simulated three ways: on an explicit lattice with the Gillespie algorithm, as the deterministic well-mixed (mean-field) limit, and as the well-mixed stochastic process at a finite population size. The engine is written in C++ and exposed to R through Rcpp, with an interface built around dimensionless parameters (<code>xi</code>, <code>eta</code>, <code>p</code>) for fire spread, post-fire regrowth and the clustering of the initial landscape.</p>
+<p>The model is documented inside the package: <code><a href="reference/ForestFireR-model.html">help("ForestFireR-model")</a></code> defines the five states, every transition and its rate, the dimensionless parametrization, the baseline parameter set and the fire-mediated invasion mechanism it encodes, the mean-field equations, and what differs between the three engines.</p>
 <div class="section level2">
-<h2 id="what-this-is">What this is<a class="anchor" aria-label="anchor" href="#what-this-is"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>The package gives you a documented, R-friendly interface to the model: <code><a href="reference/generate_landscape.html">generate_landscape()</a></code>/<code><a href="reference/generate_landscape_layers.html">generate_landscape_layers()</a></code> to build initial spatial configurations, <code><a href="reference/simulate_spatial.html">simulate_spatial()</a></code> for the full spatially-explicit Gillespie simulation, <code><a href="reference/simulate_mean_field.html">simulate_mean_field()</a></code> for the deterministic well-mixed limit, and <code><a href="reference/simulate_mean_field_stochastic.html">simulate_mean_field_stochastic()</a></code> for its stochastic well-mixed counterpart, plus recording options (trajectories, grid snapshots, fire-in-progress snapshots) and reproducible RNG seeding.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"EcoComplex/ForestFireR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+<h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/EcoComplex/ForestFireR" class="external-link">ForestFireR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Deterministic well-mixed limit</span></span>
+<span><span class="va">mf</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_mean_field.html">simulate_mean_field</a></span><span class="op">(</span>T <span class="op">=</span> <span class="fl">200</span>, n1_0 <span class="op">=</span> <span class="fl">0.9</span>, n2_0 <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mf</span><span class="op">$</span><span class="va">time</span>, <span class="va">mf</span><span class="op">$</span><span class="va">n1</span>, type <span class="op">=</span> <span class="st">"l"</span>, col <span class="op">=</span> <span class="st">"forestgreen"</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>     xlab <span class="op">=</span> <span class="st">"time (years)"</span>, ylab <span class="op">=</span> <span class="st">"density"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">mf</span><span class="op">$</span><span class="va">time</span>, <span class="va">mf</span><span class="op">$</span><span class="va">n2</span>, col <span class="op">=</span> <span class="st">"firebrick"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Lattice simulation, 10 per cent invader clustered in one patch</span></span>
+<span><span class="va">sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_spatial.html">simulate_spatial</a></span><span class="op">(</span>T <span class="op">=</span> <span class="fl">200</span>, L <span class="op">=</span> <span class="fl">100</span>, density2 <span class="op">=</span> <span class="fl">0.1</span>, p <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>                       seed <span class="op">=</span> <span class="fl">1</span>, record_dt <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>native <span class="op">=</span> <span class="va">sp</span><span class="op">$</span><span class="va">n1</span>, invader <span class="op">=</span> <span class="va">sp</span><span class="op">$</span><span class="va">n2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Baseline parameters, and the probability-to-rate conversion</span></span>
+<span><span class="fu"><a href="reference/default_rates.html">default_rates</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/xi2lambda.html">xi2lambda</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1e6</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="what-the-package-provides">What the package provides<a class="anchor" aria-label="anchor" href="#what-the-package-provides"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>function</th>
+<th>purpose</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="reference/generate_landscape.html">generate_landscape()</a></code></td>
+<td>initial lattice: one species placed over another with density and clustering <code>p</code>
+</td>
+</tr>
+<tr>
+<td><code><a href="reference/generate_landscape_layers.html">generate_landscape_layers()</a></code></td>
+<td>initial lattice built from a sequence of placements over an arbitrary fill state</td>
+</tr>
+<tr>
+<td><code><a href="reference/simulate_spatial.html">simulate_spatial()</a></code></td>
+<td>lattice Gillespie simulation</td>
+</tr>
+<tr>
+<td><code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code></td>
+<td>same, starting from a supplied grid</td>
+</tr>
+<tr>
+<td><code><a href="reference/simulate_mean_field.html">simulate_mean_field()</a></code></td>
+<td>deterministic well-mixed limit</td>
+</tr>
+<tr>
+<td><code><a href="reference/simulate_mean_field_stochastic.html">simulate_mean_field_stochastic()</a></code></td>
+<td>well-mixed stochastic process at population size <code>N</code>
+</td>
+</tr>
+<tr>
+<td><code><a href="reference/simulate_spatial_movie.html">simulate_spatial_movie()</a></code></td>
+<td>render a run as a video or animated GIF</td>
+</tr>
+<tr>
+<td>
+<code><a href="reference/default_rates.html">default_rates()</a></code>, <code><a href="reference/xi2lambda.html">xi2lambda()</a></code>, <code><a href="reference/xi2lambda.html">eta2lambda()</a></code>
+</td>
+<td>baseline parameters and the dimensionless conversion</td>
+</tr>
+<tr>
+<td><code>FF_STATE</code></td>
+<td>the grid’s state codes</td>
+</tr>
+</tbody>
+</table>
+<p>Recording options: <code>record_dt</code> for trajectories, <code>record_grid</code> for initial and final grids, <code>capture_fire_snapshots</code> for grids captured while a fire is actually burning (a single outbreak resolves in about an hour of simulated time against decades of vegetation dynamics, so a fixed-time snapshot essentially never lands on one). Every simulate function takes its own <code>seed</code>; the engine’s generator is <code>std::mt19937_64</code>, independent of R’s.</p>
+<p>Two things to know when building initial conditions with <code><a href="reference/generate_landscape_layers.html">generate_landscape_layers()</a></code>:</p>
 <ul>
-<li>Optional trajectory recording (<code>record_dt</code> argument) for both the spatial and mean-field models, instead of only final densities.</li>
-<li>Optional initial/final grid snapshots (<code>record_grid = TRUE</code>) for the spatial model.</li>
-<li>A well-mixed <em>stochastic</em> counterpart (<code><a href="reference/simulate_mean_field_stochastic.html">simulate_mean_field_stochastic()</a></code>) to the deterministic mean-field model, for separating the effect of spatial structure from demographic stochasticity.</li>
 <li>
-<code><a href="reference/generate_landscape.html">generate_landscape()</a></code> to build/inspect an initial spatial configuration on its own.</li>
-<li>R-facing functions use a compact dimensionless notation (<code>xi_nat</code>, <code>xi_inv</code>, <code>eta_inv</code>, <code>p</code>) with <code><a href="reference/xi2lambda.html">xi2lambda()</a></code>/<code><a href="reference/xi2lambda.html">eta2lambda()</a></code> handling the conversion to the underlying rate constants, and <code><a href="reference/default_rates.html">default_rates()</a></code> gives Table 1’s baseline values.</li>
+<strong>Native-extinction early stop.</strong> The Gillespie loop treats native density below <code>0.0001</code> as extinction and ends the run there. That is right whenever the landscape starts with native vegetation, and wrong for a grid built without any (a fire-over-invader domain, say), where <code>n1</code> is <code>0</code> from the first step. Pass <code>check_extinction = FALSE</code> to <code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code> for those.</li>
 <li>
-<code><a href="reference/generate_landscape_layers.html">generate_landscape_layers()</a></code> + <code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code>: <code><a href="reference/generate_landscape.html">generate_landscape()</a></code> can only place one pattern species over one background (its <code>density2</code>/<code>p</code> arguments, e.g. invader over native). Some analyses need initial conditions that don’t fit that shape – two species placed <em>independently</em> over a shared empty background (e.g. 5% native + 5% invader over an all-<code>empty_postfire</code> domain), or a small pattern placed over an already-uniform domain (e.g. 1% fire over an all-invader domain). <code><a href="reference/generate_landscape_layers.html">generate_landscape_layers()</a></code> builds these by filling the whole grid with one state and then growing a <em>sequence</em> of layers onto it, each layer’s candidates restricted to whatever background the layers before it left behind; <code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code> then runs the usual spatial dynamics starting from that grid instead of building one internally. See <code>FF_STATE</code> for the grid’s state codes (<code>native</code>/<code>invader</code>/<code>fire</code>/<code>empty</code>/<code>empty_postfire</code>) and each function’s documentation for worked examples. Two things to know before using this:
-<ul>
-<li>
-<strong>Native-extinction early stop.</strong> The engine’s Gillespie loop treats native density dropping below <code>0.0001</code> as extinction and stops the run there – correct whenever the initial landscape has native vegetation to begin with (as <code><a href="reference/generate_landscape.html">generate_landscape()</a></code>’s <code>density2</code>/<code>p</code> initial conditions always do), but wrong for an <code>initial_grid</code> built with no native vegetation at all (e.g. a fire-over-invader domain): <code>n1</code> is <code>0</code> from the first step, so the run would otherwise stop after a single event. Pass <code>check_extinction = FALSE</code> to <code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code> whenever <code>initial_grid</code> has no native vegetation by design.</li>
-<li>
-<strong>Layer density budget.</strong> A layer’s target (<code>density * L*L</code> cells) can exceed what’s actually left in its <code>background</code> state (e.g. two layers’ densities summing to more than what <code>fill_state</code> provided). When that happens, the layer stops early rather than searching indefinitely for an unreachable target (bounded retries, then a relaxed fallback selection), and prints a one-time warning naming how many cells it actually managed to place.</li>
-</ul>
-</li>
-<li>
-<code>capture_fire_snapshots</code> (on <code><a href="reference/simulate_spatial.html">simulate_spatial()</a></code> and <code><a href="reference/simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code>): the default fire-spread and fire-extinction rates are ~1e6/year (hours-scale) against years-scale vegetation dynamics, so any single active-fire episode resolves in a sliver of simulated time that a fixed-time grid capture (<code>record_grid</code>’s start/end snapshots) essentially never lands on. With <code>capture_fire_snapshots = TRUE</code>, the engine scans for <code>n3 &gt; 0</code> after every accepted Gillespie event and records that grid (throttled to at most one capture per <code>fire_snapshot_min_gap</code> simulated-time units, so a single outbreak doesn’t fill the return value with near-duplicate frames). The result gains <code>fire_snapshot_times</code> (numeric vector) and <code>fire_snapshot_grids</code> (list of <code>L</code>x<code>L</code> integer matrices, same length and order) – pick whichever entry is closest to a target illustration time after the run completes. Overhead is small (~1% wall-clock in our testing) since <code>n3</code> is already recomputed after every event regardless.</li>
+<strong>Layer density budget.</strong> A layer’s target (<code>density * L*L</code> cells) can exceed what is left in its background state. The layer then stops early rather than searching for an unreachable target, and prints how many cells it actually placed.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="validation">Validation<a class="anchor" aria-label="anchor" href="#validation"></a>
+<h2 id="worked-scripts">Worked scripts<a class="anchor" aria-label="anchor" href="#worked-scripts"></a>
 </h2>
-<p>With the paper’s stated baseline parameters (<code>xi_inv = eta_inv = 0.6</code>, <code>xi_nat = 0.5</code>, 10% initial invader density, heterogeneous distribution, T up to 200 years), both <code><a href="reference/simulate_mean_field.html">simulate_mean_field()</a></code> and <code><a href="reference/simulate_spatial.html">simulate_spatial()</a></code> reproduce the qualitative pattern the paper describes: native density declines while invader density grows over the 200-year window (mean-field: native 0.90 -&gt; 0.08, invader 0.10 -&gt; 0.61). Sweeping <code>xi_inv</code>/<code>eta_inv</code> (see <code>examples/03_phase_diagram_xi_eta_sweep.R</code>) reproduces a sharp continuous-looking transition to native extinction, consistent with the paper’s description of the model’s main qualitative result. The heterogeneity example (<code>examples/02_landscape_heterogeneity.R</code>) reproduces the paper’s finding that a segregated/clustered invader (<code>p = 1</code>) drives faster native decline than a randomly dispersed one (<code>p = 0</code>).</p>
-<p>Mass conservation (<code>n1+n2+n3+n4+n5 = 1</code>) was checked to hold to floating precision for both the spatial and mean-field engines.</p>
+<p>Installed with the package:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples"</span>, package <span class="op">=</span> <span class="st">"ForestFireR"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; "01_trajectories_meanfield_vs_spatial.R"  # the three engines side by side</span></span>
+<span><span class="co">#&gt; "02_landscape_heterogeneity.R"            # clustering of the initial landscape</span></span>
+<span><span class="co">#&gt; "03_phase_diagram_xi_eta_sweep.R"         # (xi_inv, eta_inv) phase diagram</span></span></code></pre></div>
+<p>Every function’s help page also carries runnable examples, including the reduced-dynamics recipes (post-fire regrowth alone, fire spread alone).</p>
+</div>
+<div class="section level2">
+<h2 id="behaviour-of-the-implementation">Behaviour of the implementation<a class="anchor" aria-label="anchor" href="#behaviour-of-the-implementation"></a>
+</h2>
+<p>Starting from 10 per cent invader and the baseline parameters (<code>xi_nat = 0.5</code>, <code>xi_inv = eta_inv = 0.6</code>, <code>eta_nat = 0</code>) over 200 years:</p>
+<ul>
+<li>
+<strong>Mean field</strong> (<code>n1_0 = 0.9</code>, <code>n2_0 = 0.1</code>): native declines from 0.90 to 0.079 while the invader grows from 0.10 to 0.613.</li>
+<li>
+<strong>Lattice</strong> (<code>L = 100</code>, <code>density2 = 0.1</code>, <code>p = 1</code>, <code>seed = 1</code>): native ends at 0.050 and the invader at 0.675; the same run with a scattered invader (<code>p = 0</code>) ends at 0.057 native and 0.336 invader, the rest of the grid still unoccupied post-fire ground.</li>
+<li>
+<strong>Well mixed, stochastic</strong> (<code>N = 10000</code>): the invasion does not take off (native 0.971, invader 0.029 at <code>T = 200</code>). Fire here is a discrete, rare event, whereas the deterministic limit carries a residual burning density of order <code>1e-11</code> at all times, which keeps the feedback running; without fire the native species out-replaces the invader by construction.</li>
+</ul>
+<p>Sweeping <code>xi_inv</code> and <code>eta_inv</code> (<code>inst/examples/03_phase_diagram_xi_eta_sweep.R</code>) maps the transition to native extinction over the plane of the two fire-mediated advantages.</p>
+<p>Mass conservation (<code>n1+n2+n3+n4+n5 = 1</code>) holds to floating-point precision in all three engines: the largest deviation over a recorded <code>L = 100</code>, <code>T = 200</code> trajectory is <code>1.1e-16</code>. The <code>testthat</code> suite checks exact, a priori known outcomes (null dynamics, single-species colonization, isolated fire burnout, ignition switched off, reproducibility, mass conservation, the <code>xi</code>/<code>eta</code> conversion, and the random stream itself).</p>
 </div>
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
 </h2>
-<p>The spatial model’s runtime is dominated by the number of Gillespie events, which scales with grid size and, once a fire is actively burning, with <code>lambda_F0</code> itself (very short waiting times between fire-related events). Rough measurements in a modest sandboxed environment:</p>
+<p>Measured on an 8-core laptop with the default sum-tree engine (<code>engine = "tree"</code>), median of three runs:</p>
 <table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
 <thead><tr>
-<th>L</th>
-<th>T</th>
+<th>run</th>
 <th>wall time</th>
 </tr></thead>
 <tbody>
 <tr>
-<td>50</td>
-<td>20</td>
-<td>~0.1 s</td>
+<td><code>simulate_spatial(T = 200, L = 100)</code></td>
+<td>0.05 s</td>
 </tr>
 <tr>
-<td>100</td>
-<td>10</td>
-<td>~0.75 s</td>
+<td><code>simulate_spatial(T = 200, L = 200)</code></td>
+<td>0.24 s</td>
 </tr>
 <tr>
-<td>200</td>
-<td>20</td>
-<td>~19 s</td>
+<td><code>simulate_spatial(T = 200, L = 200, xi_inv = 0.9, eta_inv = 0.9)</code></td>
+<td>0.37 s</td>
 </tr>
 <tr>
-<td>200</td>
-<td>100</td>
-<td>~2+ min (longer if/when fire is actively spreading)</td>
+<td><code>simulate_spatial(T = 1000, L = 200)</code></td>
+<td>0.55 s</td>
+</tr>
+<tr>
+<td><code>simulate_mean_field(T = 300)</code></td>
+<td>0.004 s</td>
+</tr>
+<tr>
+<td><code>simulate_mean_field_stochastic(T = 200, N = 10000)</code></td>
+<td>0.001 s</td>
 </tr>
 </tbody>
 </table>
-<p>For interactive exploration, keep <code>L</code> around 50-100. Reserve <code>L = 200</code> (paper resolution) for longer, non-interactive/background runs, and use <code>record_dt = -1</code> (final state only) for parameter sweeps where you don’t need the full trajectory.</p>
+<p>Runtime grows with the number of Gillespie events, so with grid size, time horizon and with parameters that keep fires burning. <code>record_dt = -1</code> (final state only) is the cheapest option for parameter sweeps. <code>engine = "linear"</code> reproduces runs made with ForestFireR &lt; 0.7.0 and is orders of magnitude slower on large grids.</p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<p>This package implements the model from:</p>
-<blockquote>
-<p>de la Fuente, R. and Saravia, L.A. “Dynamics of invasion in forest-fire models” (manuscript; see the <a href="https://github.com/EcoComplex/InvasionForestFires" class="external-link uri">https://github.com/EcoComplex/InvasionForestFires</a> repository for the current submitted version).</p>
-</blockquote>
-<p>If you use this package in published work, please cite that paper rather than (or in addition to) this repository.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"ForestFireR"</span><span class="op">)</span></span></code></pre></div>
+<p>The package implements the model analysed in Saravia, L.A. and de la Fuente, R., <em>Dynamics of invasion in forest-fire models</em> (manuscript; analysis code at <a href="https://github.com/EcoComplex/InvasionForestFires" class="external-link uri">https://github.com/EcoComplex/InvasionForestFires</a>). Cite the package for the implementation and the article for the model.</p>
 </div>
 <div class="section level2">
 <h2 id="layout">Layout<a class="anchor" aria-label="anchor" href="#layout"></a>
 </h2>
 <ul>
 <li>
-<code>src/forest_fire_model.cpp</code> – the C++ simulation engine (Gillespie spatial dynamics and mean-field ODE integration) plus the Rcpp export layer.</li>
+<code>R/model.R</code> – the model reference page (<code><a href="reference/ForestFireR-model.html">help("ForestFireR-model")</a></code>).</li>
 <li>
 <code>R/rates.R</code> – <code><a href="reference/xi2lambda.html">xi2lambda()</a></code>, <code><a href="reference/xi2lambda.html">eta2lambda()</a></code>, <code><a href="reference/default_rates.html">default_rates()</a></code>.</li>
 <li>
-<code>R/simulate.R</code> – <code><a href="reference/generate_landscape.html">generate_landscape()</a></code>, <code><a href="reference/simulate_spatial.html">simulate_spatial()</a></code>, <code><a href="reference/simulate_mean_field.html">simulate_mean_field()</a></code>, <code><a href="reference/simulate_mean_field_stochastic.html">simulate_mean_field_stochastic()</a></code>, <code><a href="reference/set_seed.html">set_seed()</a></code>.</li>
+<code>R/simulate.R</code> – landscape generation, the three simulation engines, <code>FF_STATE</code>.</li>
 <li>
-<code>examples/</code> – runnable scripts illustrating trajectories, landscape heterogeneity, and a parameter-sweep phase diagram.</li>
+<code>R/movie.R</code> – <code><a href="reference/simulate_spatial_movie.html">simulate_spatial_movie()</a></code>.</li>
+<li>
+<code>src/forest_fire_model.cpp</code> – the C++ engine (lattice Gillespie dynamics, well-mixed Gillespie dynamics, mean-field integration) and the Rcpp export layer.</li>
+<li>
+<code>inst/examples/</code> – worked scripts.</li>
+<li>
+<code>tests/testthat/</code> – unit tests.</li>
 </ul>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/EcoComplex/ForestFireR/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/EcoComplex/ForestFireR/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="https://www.r-project.org/Licenses/GPL-3" class="external-link">GPL-3</a></li>
@@ -160,7 +265,8 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Leonardo A. Saravia <br><small class="roles"> Maintainer </small>   </li>
+<li>Leonardo A. Saravia <br><small class="roles"> Author, maintainer </small>   </li>
+<li>Rebeca de la Fuente <br><small class="roles"> Author </small>   </li>
 </ul>
 </div>
 
@@ -171,7 +277,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Leonardo A. Saravia.</p>
+  <p>Developed by Leonardo A. Saravia, Rebeca de la Fuente.</p>
 </div>
 
 <div class="pkgdown-footer-right">

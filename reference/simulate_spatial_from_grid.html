@@ -29,7 +29,7 @@ condition), keeping only fire spread/burnout."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">ForestFireR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,7 @@ condition), keeping only fire spread/burnout."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/EcoComplex/ForestFireR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -50,7 +51,7 @@ condition), keeping only fire spread/burnout."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Simulate the spatially-explicit model from a supplied landscape</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/EcoComplex/ForestFireR/blob/main/R/simulate.R" class="external-link"><code>R/simulate.R</code></a></small>
       <div class="d-none name"><code>simulate_spatial_from_grid.Rd</code></div>
     </div>
 
@@ -119,20 +120,19 @@ threshold and the invader moderately above it.</p></dd>
 
 <dt id="arg-eta-nat-eta-inv">eta_nat, eta_inv<a class="anchor" aria-label="anchor" href="#arg-eta-nat-eta-inv"></a></dt>
 <dd><p>Native/invader post-fire regrowth probabilities
-(see <code><a href="xi2lambda.html">xi2lambda()</a></code>). Default <code>eta_nat = 0</code> matches the paper's own
-parametrization (no native post-fire regrowth advantage); default
-<code>eta_inv = 0.6</code> represents a moderate post-fire regrowth advantage
-for the invader.</p></dd>
+(see <code><a href="xi2lambda.html">xi2lambda()</a></code>). Default <code>eta_nat = 0</code> leaves the native species
+without a post-fire regrowth advantage; default <code>eta_inv = 0.6</code> gives
+the invader a moderate one.</p></dd>
 
 
 <dt id="arg-l-l-l-l-l-lig-lig-">L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23<a class="anchor" aria-label="anchor" href="#arg-l-l-l-l-l-lig-lig-"></a></dt>
 <dd><p>Base rate constants; see
-<code><a href="default_rates.html">default_rates()</a></code> for Table 1 defaults. Override individual entries to
-explore parameter space, e.g. <code>L_21 = 0.02</code>.</p></dd>
+<code><a href="default_rates.html">default_rates()</a></code> for the baseline values. Override individual entries
+to explore parameter space, e.g. <code>L_21 = 0.02</code>.</p></dd>
 
 
 <dt id="arg-periodic">periodic<a class="anchor" aria-label="anchor" href="#arg-periodic"></a></dt>
-<dd><p>Use periodic boundary conditions (paper default <code>TRUE</code>).</p></dd>
+<dd><p>Use periodic boundary conditions (default <code>TRUE</code>).</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -203,13 +203,61 @@ the same probabilities (and, for a given seed, the same events up to
 floating-point rounding).</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>As <code><a href="simulate_spatial.html">simulate_spatial()</a></code>: final <code>time_sim</code> and densities
+<code>n0</code>..<code>n5</code>, plus <code>trajectory</code>, <code>initial_grid</code>/<code>final_grid</code> and the fire
+snapshots according to <code>record_dt</code>, <code>record_grid</code> and
+<code>capture_fire_snapshots</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="simulate_spatial.html">simulate_spatial()</a></code>, <code><a href="generate_landscape_layers.html">generate_landscape_layers()</a></code>,
+<a href="ForestFireR-model.html">ForestFireR-model</a></p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Post-fire regrowth in isolation: both species scattered over an empty</span></span></span>
+<span class="r-in"><span><span class="co"># post-fire domain, with fire and competitive replacement switched off.</span></span></span>
+<span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_landscape_layers.html">generate_landscape_layers</a></span><span class="op">(</span>L <span class="op">=</span> <span class="fl">60</span>, fill_state <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"empty_postfire"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>background <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"empty_postfire"</span><span class="op">]</span>, pattern <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"native"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>         density <span class="op">=</span> <span class="fl">0.05</span>, p <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>background <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"empty_postfire"</span><span class="op">]</span>, pattern <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"invader"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>         density <span class="op">=</span> <span class="fl">0.05</span>, p <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">simulate_spatial_from_grid</span><span class="op">(</span>T <span class="op">=</span> <span class="fl">300</span>, initial_grid <span class="op">=</span> <span class="va">g</span>,</span></span>
+<span class="r-in"><span>                                xi_nat <span class="op">=</span> <span class="fl">0</span>, xi_inv <span class="op">=</span> <span class="fl">0</span>, Lig_23 <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>                                L_12 <span class="op">=</span> <span class="fl">0</span>, L_21 <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>                                record_dt <span class="op">=</span> <span class="fl">10</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">trajectory</span>, <span class="fl">1</span><span class="op">)</span>        <span class="co"># the invader's eta_inv claims the burnt ground</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       time n0         n1        n2 n3 n4 n5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8 64.71132  0 0.08666667 0.9133333  0  0  0</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fire spread in isolation: an ignition patch over an all-invader domain,</span></span></span>
+<span class="r-in"><span><span class="co"># with no native vegetation, so the extinction stop has to be turned off.</span></span></span>
+<span class="r-in"><span><span class="va">g2</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_landscape_layers.html">generate_landscape_layers</a></span><span class="op">(</span>L <span class="op">=</span> <span class="fl">60</span>, fill_state <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"invader"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>background <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"invader"</span><span class="op">]</span>, pattern <span class="op">=</span> <span class="va">FF_STATE</span><span class="op">[</span><span class="st">"fire"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>         density <span class="op">=</span> <span class="fl">0.01</span>, p <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">simulate_spatial_from_grid</span><span class="op">(</span>T <span class="op">=</span> <span class="fl">1e-4</span>, initial_grid <span class="op">=</span> <span class="va">g2</span>,</span></span>
+<span class="r-in"><span>                                xi_inv <span class="op">=</span> <span class="fl">0.8</span>, eta_inv <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>                                L_01 <span class="op">=</span> <span class="fl">0</span>, L_02 <span class="op">=</span> <span class="fl">0</span>, L_12 <span class="op">=</span> <span class="fl">0</span>, L_21 <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>                                Lig_23 <span class="op">=</span> <span class="fl">0</span>, check_extinction <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>                                record_grid <span class="op">=</span> <span class="cn">TRUE</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>fire <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">n3</span>, burnt <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">n5</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      fire     burnt </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.0000000 0.9991667 </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Leonardo A. Saravia.</p>
+  <p>Developed by Leonardo A. Saravia, Rebeca de la Fuente.</p>
 </div>
 
 <div class="pkgdown-footer-right">

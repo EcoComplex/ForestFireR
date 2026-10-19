@@ -72,20 +72,20 @@ simulate_spatial_from_grid(
 
   Native/invader post-fire regrowth probabilities (see
   [`xi2lambda()`](https://EcoComplex.github.io/ForestFireR/reference/xi2lambda.md)).
-  Default `eta_nat = 0` matches the paper's own parametrization (no
-  native post-fire regrowth advantage); default `eta_inv = 0.6`
-  represents a moderate post-fire regrowth advantage for the invader.
+  Default `eta_nat = 0` leaves the native species without a post-fire
+  regrowth advantage; default `eta_inv = 0.6` gives the invader a
+  moderate one.
 
 - L_01, L_02, L_12, L_21, L_30, Lig_13, Lig_23:
 
   Base rate constants; see
   [`default_rates()`](https://EcoComplex.github.io/ForestFireR/reference/default_rates.md)
-  for Table 1 defaults. Override individual entries to explore parameter
-  space, e.g. `L_21 = 0.02`.
+  for the baseline values. Override individual entries to explore
+  parameter space, e.g. `L_21 = 0.02`.
 
 - periodic:
 
-  Use periodic boundary conditions (paper default `TRUE`).
+  Use periodic boundary conditions (default `TRUE`).
 
 - seed:
 
@@ -154,3 +154,54 @@ simulate_spatial_from_grid(
   reproduce runs made with ForestFireR \< 0.7.0. Both select events with
   the same probabilities (and, for a given seed, the same events up to
   floating-point rounding).
+
+## Value
+
+As
+[`simulate_spatial()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_spatial.md):
+final `time_sim` and densities `n0`..`n5`, plus `trajectory`,
+`initial_grid`/`final_grid` and the fire snapshots according to
+`record_dt`, `record_grid` and `capture_fire_snapshots`.
+
+## See also
+
+[`simulate_spatial()`](https://EcoComplex.github.io/ForestFireR/reference/simulate_spatial.md),
+[`generate_landscape_layers()`](https://EcoComplex.github.io/ForestFireR/reference/generate_landscape_layers.md),
+[ForestFireR-model](https://EcoComplex.github.io/ForestFireR/reference/ForestFireR-model.md)
+
+## Examples
+
+``` r
+# Post-fire regrowth in isolation: both species scattered over an empty
+# post-fire domain, with fire and competitive replacement switched off.
+g <- generate_landscape_layers(L = 60, fill_state = FF_STATE["empty_postfire"],
+  layers = list(
+    list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["native"],
+         density = 0.05, p = 0.8),
+    list(background = FF_STATE["empty_postfire"], pattern = FF_STATE["invader"],
+         density = 0.05, p = 0.8)
+  ), seed = 1)
+r <- simulate_spatial_from_grid(T = 300, initial_grid = g,
+                                xi_nat = 0, xi_inv = 0, Lig_23 = 0,
+                                L_12 = 0, L_21 = 0,
+                                record_dt = 10, seed = 1)
+tail(r$trajectory, 1)        # the invader's eta_inv claims the burnt ground
+#>       time n0         n1        n2 n3 n4 n5
+#> 8 64.71132  0 0.08666667 0.9133333  0  0  0
+
+# Fire spread in isolation: an ignition patch over an all-invader domain,
+# with no native vegetation, so the extinction stop has to be turned off.
+g2 <- generate_landscape_layers(L = 60, fill_state = FF_STATE["invader"],
+  layers = list(
+    list(background = FF_STATE["invader"], pattern = FF_STATE["fire"],
+         density = 0.01, p = 0.8)
+  ), seed = 1)
+f <- simulate_spatial_from_grid(T = 1e-4, initial_grid = g2,
+                                xi_inv = 0.8, eta_inv = 0,
+                                L_01 = 0, L_02 = 0, L_12 = 0, L_21 = 0,
+                                Lig_23 = 0, check_extinction = FALSE,
+                                record_grid = TRUE, seed = 1)
+c(fire = f$n3, burnt = f$n5)
+#>      fire     burnt 
+#> 0.0000000 0.9991667 
+```

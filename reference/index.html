@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ForestFireR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/EcoComplex/ForestFireR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -31,7 +32,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a></h2>
 
 
 
@@ -42,26 +43,51 @@
 
       <dl><dt>
 
-          <code><a href="FF_STATE.html">FF_STATE</a></code>
+          <code><a href="ForestFireR-model.html">ForestFireR-model</a></code> <code><a href="ForestFireR-model.html">model</a></code>
 
         </dt>
-        <dd>Named grid-state codes</dd>
+        <dd>The fire-driven invasion model simulated by ForestFireR</dd>
 
         <dt>
 
-          <code><a href="ForestFireR.html">ForestFireR-package</a></code> <code><a href="ForestFireR.html">ForestFireR</a></code>
+          <code><a href="ForestFireR-package.html">ForestFireR</a></code> <code><a href="ForestFireR-package.html">ForestFireR-package</a></code>
 
         </dt>
         <dd>ForestFireR: Spatial and Mean-Field Forest-Fire Invasion Model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="parameters">Parameters<a class="anchor" aria-label="anchor" href="#parameters"></a></h2>
 
-        <dt>
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="default_rates.html">default_rates()</a></code>
 
         </dt>
-        <dd>Table 1 default rate constants</dd>
+        <dd>Baseline rate constants</dd>
 
         <dt>
+
+          <code><a href="xi2lambda.html">xi2lambda()</a></code> <code><a href="xi2lambda.html">eta2lambda()</a></code>
+
+        </dt>
+        <dd>Convert a spread or regrowth probability to a rate constant</dd>
+      </dl></div><div class="section level2">
+      <h2 id="initial-landscapes">Initial landscapes<a class="anchor" aria-label="anchor" href="#initial-landscapes"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="generate_landscape.html">generate_landscape()</a></code>
 
@@ -77,10 +103,33 @@
 
         <dt>
 
-          <code><a href="set_seed.html">set_seed()</a></code>
+          <code><a href="FF_STATE.html">FF_STATE</a></code>
 
         </dt>
-        <dd>Set the underlying C RNG seed directly</dd>
+        <dd>Named grid-state codes</dd>
+      </dl></div><div class="section level2">
+      <h2 id="simulation">Simulation<a class="anchor" aria-label="anchor" href="#simulation"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="simulate_spatial.html">simulate_spatial()</a></code>
+
+        </dt>
+        <dd>Simulate the spatially-explicit stochastic model</dd>
+
+        <dt>
+
+          <code><a href="simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code>
+
+        </dt>
+        <dd>Simulate the spatially-explicit model from a supplied landscape</dd>
 
         <dt>
 
@@ -98,37 +147,17 @@
 
         <dt>
 
-          <code><a href="simulate_spatial.html">simulate_spatial()</a></code>
-
-        </dt>
-        <dd>Simulate the spatially-explicit stochastic model</dd>
-
-        <dt>
-
-          <code><a href="simulate_spatial_from_grid.html">simulate_spatial_from_grid()</a></code>
-
-        </dt>
-        <dd>Simulate the spatially-explicit model from a supplied landscape</dd>
-
-        <dt>
-
           <code><a href="simulate_spatial_movie.html">simulate_spatial_movie()</a></code>
 
         </dt>
         <dd>Render an animation of a spatial simulation</dd>
-
-        <dt>
-
-          <code><a href="xi2lambda.html">xi2lambda()</a></code> <code><a href="xi2lambda.html">eta2lambda()</a></code>
-
-        </dt>
-        <dd>Convert a spread/regrowth probability to a rate constant</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Leonardo A. Saravia.</p>
+  <p>Developed by Leonardo A. Saravia, Rebeca de la Fuente.</p>
 </div>
 
 <div class="pkgdown-footer-right">
