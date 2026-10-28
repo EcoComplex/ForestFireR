@@ -17,5 +17,5 @@ bibentry(
                person("Rebeca", "de la Fuente")),
   year     = "2026",
   note     = "Manuscript",
-  url      = "https://github.com/EcoComplex/InvasionForestFires"
+  url      = "https://github.com/EcoComplex/InvasionForestFiresBistability"
 )

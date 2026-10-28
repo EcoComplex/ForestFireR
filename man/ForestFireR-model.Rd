@@ -185,7 +185,7 @@ exceed the requested \code{T}, by a wide margin when the total rate is low.
 \references{
 Saravia, L.A. and de la Fuente, R. Dynamics of invasion in forest-fire
 models (manuscript). Analysis code:
-\url{https://github.com/EcoComplex/InvasionForestFires}.
+\url{https://github.com/EcoComplex/InvasionForestFiresBistability}.
 
 Gillespie, D.T. (1977) Exact stochastic simulation of coupled chemical
 reactions. Journal of Physical Chemistry 81, 2340-2361.
