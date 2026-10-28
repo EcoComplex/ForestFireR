@@ -9,7 +9,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/EcoComplex/ForestFireR/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/EcoComplex/ForestFireR/blob/v0.9.0/inst/CITATION)
 
 Saravia L, de la Fuente R (2026). *ForestFireR: Spatial and Mean-Field
 Forest-Fire Invasion Model*.
