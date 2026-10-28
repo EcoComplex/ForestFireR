@@ -159,8 +159,9 @@ citation("ForestFireR")
 
 The package implements the model analysed in Saravia, L.A. and de la
 Fuente, R., *Dynamics of invasion in forest-fire models* (manuscript;
-analysis code at <https://github.com/EcoComplex/InvasionForestFires>).
-Cite the package for the implementation and the article for the model.
+analysis code at
+<https://github.com/EcoComplex/InvasionForestFiresBistability>). Cite
+the package for the implementation and the article for the model.
 
 ## Layout
 

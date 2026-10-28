@@ -209,7 +209,7 @@ of the pair-correlation landscape generators of Hiebeler (2000).
 
 Saravia, L.A. and de la Fuente, R. Dynamics of invasion in forest-fire
 models (manuscript). Analysis code:
-<https://github.com/EcoComplex/InvasionForestFires>.
+<https://github.com/EcoComplex/InvasionForestFiresBistability>.
 
 Gillespie, D.T. (1977) Exact stochastic simulation of coupled chemical
 reactions. Journal of Physical Chemistry 81, 2340-2361.

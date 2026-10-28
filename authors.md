@@ -25,12 +25,12 @@ Forest-Fire Invasion Model*. R package version 0.9.0,
 
 Saravia L, de la Fuente R (2026). “Dynamics of invasion in forest-fire
 models.” Manuscript,
-<https://github.com/EcoComplex/InvasionForestFires>.
+<https://github.com/EcoComplex/InvasionForestFiresBistability>.
 
     @Unpublished{,
       title = {Dynamics of invasion in forest-fire models},
       author = {Leonardo A. Saravia and Rebeca {de la Fuente}},
       year = {2026},
       note = {Manuscript},
-      url = {https://github.com/EcoComplex/InvasionForestFires},
+      url = {https://github.com/EcoComplex/InvasionForestFiresBistability},
     }
