@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/1347738457.svg)](https://doi.org/10.5281/zenodo.23741847)
+
 # ForestFireR
 
 R package simulating a two-species vegetation system in which fire mediates
@@ -142,6 +144,8 @@ state only) is the cheapest option for parameter sweeps.
 orders of magnitude slower on large grids.
 
 ## Citation
+
+The package is archived on Zenodo [10.5281/zenodo.23741847](https://doi.org/10.5281/zenodo.23741847)
 
 ```r
 citation("ForestFireR")

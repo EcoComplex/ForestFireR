@@ -21,7 +21,8 @@ Description: Simulation of a two-species vegetation system in which fire
 License: GPL-3
 Encoding: UTF-8
 URL: https://github.com/EcoComplex/ForestFireR,
-    https://EcoComplex.github.io/ForestFireR/
+    https://EcoComplex.github.io/ForestFireR/,
+    https://doi.org/10.5281/zenodo.23741847
 BugReports: https://github.com/EcoComplex/ForestFireR/issues
 Imports: Rcpp
 LinkingTo: Rcpp
