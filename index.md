@@ -152,6 +152,9 @@ sweeps. `engine = "linear"` reproduces runs made with ForestFireR \<
 
 ## Citation
 
+The package is archived on Zenodo
+[10.5281/zenodo.23741847](https://doi.org/10.5281/zenodo.23741847)
+
 ``` r
 
 citation("ForestFireR")

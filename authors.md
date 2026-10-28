@@ -9,17 +9,19 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/EcoComplex/ForestFireR/blob/v0.1.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/EcoComplex/ForestFireR/blob/main/inst/CITATION)
 
 Saravia L, de la Fuente R (2026). *ForestFireR: Spatial and Mean-Field
-Forest-Fire Invasion Model*. R package version 0.9.0,
-<https://github.com/EcoComplex/ForestFireR>.
+Forest-Fire Invasion Model*.
+[doi:10.5281/zenodo.23741847](https://doi.org/10.5281/zenodo.23741847).
+R package version 0.9.0, <https://github.com/EcoComplex/ForestFireR>.
 
     @Manual{,
       title = {ForestFireR: Spatial and Mean-Field Forest-Fire Invasion Model},
       author = {Leonardo A. Saravia and Rebeca {de la Fuente}},
       year = {2026},
       note = {R package version 0.9.0},
+      doi = {10.5281/zenodo.23741847},
       url = {https://github.com/EcoComplex/ForestFireR},
     }
 
